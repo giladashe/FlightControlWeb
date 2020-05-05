@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="Bootstrap/css/bootstrap.min.css">
+
+    <!-- jQuery library -->
+    <script src="Bootstrap/js/bootstrap.min.js"></script>
+
+    <!-- Popper JS -->
+    <script src="Bootstrap/js/jquery-3.4.1.slim.min.js"></script>
+
+    <!-- Latest compiled JavaScript -->
+    <script src="Bootstrap/js/popper.min.js"></script>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+          integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+          crossorigin="" />
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+            integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+            crossorigin="">
+    </script>
+    <title>Simple Map</title>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <style>
+        /* Always set the map height explicitly to define the size of the div
+        * element that contains the map. */
+        #map {
+            height: 100%;
+        }
+        /* Optional: Makes the sample page fill the window. */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+
+</head>
+<body>
+    <h3>My Google Maps</h3>
+    <div id="map"></div>
+    <script>
+        function initMap() {
+			var coordinates = { lat: 32.002771, lng: 34.888544 };
+			var map = new google.maps.Map(document.getElementById('map', coordinates), {
+                zoom: 4,
+				center: coordinates
+            });
+        }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAx7LLopSO76G5tucyaoefZKVc3TkAypv4&callback=initMap"
+            async defer></script>
+
+</body>
+</html>
