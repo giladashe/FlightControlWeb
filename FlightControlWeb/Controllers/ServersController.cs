@@ -10,40 +10,36 @@ namespace FlightControlWeb.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class FlightPlansController : ControllerBase
+    public class ServersController : ControllerBase
     {
-
         private IFlightsManager manager;
 
-        public FlightPlansController(IFlightsManager manager)
+        public ServersController(IFlightsManager manager)
         {
             this.manager = manager;
         }
 
 
-       
-        // GET: api/FlightPlans/5
-        [HttpGet("{id}", Name = "GetFlightPlan")]
-        public FlightPlan GetFlightPlan(string id)
+        // GET: api/Servers
+        [HttpGet]
+        public IEnumerable<Server> GetAllServers()
         {
-            return manager.GetFlightPlan(id);
+            return manager.GetAllServers();
         }
 
-        // POST: api/FlightPlans
+        // POST: api/Servers
         [HttpPost]
-        public void Post([FromBody] FlightPlan plan)
+        public void Post([FromBody] Server server)
         {
-            
-
-            string answer = manager.InsertFlightPlan(plan);
-            Console.WriteLine(answer);
+            string response = manager.InsertServer(server);
         }
+
 
         // DELETE: api/ApiWithActions/5
         [HttpDelete("{id}")]
         public void Delete(string id)
         {
-            string answer = manager.DeleteFlight(id);
+            string response = manager.DeleteServer(id);
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using FlightControlWeb.Model;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,9 +6,11 @@ using System.Threading.Tasks;
 
 namespace FlightControlWeb.Models
 {
-    public class PlansManager
+    public class FlightsManager : IFlightsManager
     {
         private static ConcurrentDictionary<string, FlightPlan> flightPlans = new ConcurrentDictionary<string, FlightPlan>();
+        private ConcurrentDictionary<string, Server> servers = new ConcurrentDictionary<string, Server>();
+
 
         public FlightPlan GetFlightPlan(string key)
         {
@@ -73,6 +74,46 @@ namespace FlightControlWeb.Models
             else
             {
                 return "not inside";
+            }
+        }
+
+        public IEnumerable<Flight> GetAllFlights(string dateTime)
+        {
+            //TODO it according to dateTime
+            return null;
+        }
+
+
+        public IEnumerable<Flight> GetAllFlightsAllServers(string dateTime)
+        {
+            return null;
+        }
+
+        public IEnumerable<Server> GetAllServers()
+        {
+            return servers.Values.AsEnumerable();
+        }
+
+        public string InsertServer(Server server)
+        {
+            if (!servers.ContainsKey(server.ServerId))
+            {
+                servers[server.ServerId] = server;
+                return "Success";
+            }
+            return "Already inside";
+        }
+
+        public string DeleteServer(string id)
+        {
+            Server server;
+            bool removed = servers.Remove(id, out server);
+            if (removed) {
+                return "Success";
+            }
+            else
+            {
+                return "Not Inside";
             }
         }
     }

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FlightControlWeb.Model;
 using FlightControlWeb.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +12,18 @@ namespace FlightControlWeb.Controllers
     [ApiController]
     public class FlightsController : ControllerBase
     {
-        private PlansManager manager = new PlansManager();
+        private IFlightsManager manager;
+
+        public FlightsController(IFlightsManager manager)
+        {
+            this.manager = manager;
+        }
+
+
+
+
+
+
         // GET: api/Flights
         [HttpGet]
         public IEnumerable<string> GetAllFlights()
