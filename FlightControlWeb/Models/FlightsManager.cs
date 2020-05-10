@@ -9,17 +9,17 @@ namespace FlightControlWeb.Models
     public class FlightsManager : IFlightsManager
     {
         private static ConcurrentDictionary<string, FlightPlan> flightPlans = new ConcurrentDictionary<string, FlightPlan>();
-        private ConcurrentDictionary<string, Server> servers = new ConcurrentDictionary<string, Server>();
+        private static ConcurrentDictionary<string, Server> servers = new ConcurrentDictionary<string, Server>();
 
 
         public FlightPlan GetFlightPlan(string key)
         {
-            if(key == "5")
+           /* if(key == "5")
             {
                 flightPlans.TryAdd("wow", new FlightPlan(216, "baasfa",new InitialLocation(30.23423, 234.234, "2020asfafas"),
                     new List<Segment>() { new Segment(40.23423, 2234.234, 365)}));
                 return flightPlans["wow"];
-            }
+            }*/
             if (!flightPlans.ContainsKey(key))
             {
                 return null;
