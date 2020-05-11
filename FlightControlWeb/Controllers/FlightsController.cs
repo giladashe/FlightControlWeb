@@ -19,37 +19,20 @@ namespace FlightControlWeb.Controllers
             this.manager = manager;
         }
 
-
-
-
-
-
-        // GET: api/Flights
-        [HttpGet]
-        public IEnumerable<string> GetAllFlights()
+        // GET: api/Flights?relative_to=<DATE_TIME>
+        [HttpGet("{request}", Name = "GetAllFlightsFromServer")]
+        public IEnumerable<Flight> GetAllFlightsFromServer(HttpRequest request)
         {
-            return new string[] { "value1", "value2" };
+            return null;
         }
 
-        // GET: api/Flights/5
-        [HttpGet("{id}", Name = "GetFlights")]
+        /*// GET: api/Flights/5
+        [HttpGet("{id}","{}", Name = "GetFlightsAllServers")]
         public IEnumerable<Flight> GetFlights(string date)
         {
 
             return null;
-        }
-
-        // POST: api/Flights
-        [HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }
-
-        // PUT: api/Flights/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
+        }*/
 
         // DELETE: api/ApiWithActions/5
         [HttpDelete("{id}")]

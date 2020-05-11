@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.CodeAnalysis;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,18 +15,18 @@ namespace FlightControlWeb.Models
 
         public FlightPlan GetFlightPlan(string key)
         {
-           /* if(key == "5")
-            {
-                flightPlans.TryAdd("wow", new FlightPlan(216, "baasfa",new InitialLocation(30.23423, 234.234, "2020asfafas"),
-                    new List<Segment>() { new Segment(40.23423, 2234.234, 365)}));
-                return flightPlans["wow"];
-            }*/
+            /* if(key == "5")
+             {
+                 flightPlans.TryAdd("wow", new FlightPlan(216, "baasfa",new InitialLocation(30.23423, 234.234, "2020asfafas"),
+                     new List<Segment>() { new Segment(40.23423, 2234.234, 365)}));
+                 return flightPlans["wow"];
+             }*/
             if (!flightPlans.ContainsKey(key))
             {
                 return null;
             }
             FlightPlan flightPlan = flightPlans[key];
-            if(flightPlan == null)
+            if (flightPlan == null)
             {
                 Console.WriteLine("doesn't exist");
             }
@@ -55,18 +56,19 @@ namespace FlightControlWeb.Models
             {
                 flightId = "0";
             }
-            
+
             return flightId;
         }
 
         public string DeleteFlight(string id)
         {
-            if(!flightPlans.ContainsKey(id)){
+            if (!flightPlans.ContainsKey(id))
+            {
                 return "not inside";
             }
             FlightPlan fp = new FlightPlan();
-            
-            bool removed = flightPlans.Remove(id,out fp);
+
+            bool removed = flightPlans.Remove(id, out fp);
             if (removed)
             {
                 return "success";
@@ -79,11 +81,39 @@ namespace FlightControlWeb.Models
 
         public IEnumerable<Flight> GetAllFlights(string dateTime)
         {
-            //TODO it according to dateTime
-            return null;
+            DateTime givenTime = DateTime.ParseExact(dateTime,
+                    "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.CultureInfo.InvariantCulture);
+            List<Flight> currentFlights = new List<Flight>();
+            foreach (KeyValuePair<string, FlightPlan> idAndPlan in flightPlans)
+            {
+                string initialTimeToParse = idAndPlan.Value.Location.DateTime;
+                DateTime initialTime = DateTime.ParseExact(initialTimeToParse,
+                    "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.CultureInfo.InvariantCulture);
+                int comparison = initialTime.CompareTo(givenTime);
+                // or it's the beginning of flight or it's inside a running flight
+                if (comparison == 0 || (comparison > 0 && CheckIfInside(initialTime,givenTime,idAndPlan.Value)))
+                {
+                    currentFlights.Add(new Flight(idAndPlan.Key, false, idAndPlan.Value));
+                }
+            }
+            return currentFlights;
         }
 
-
+        private bool CheckIfInside(DateTime initialTime, DateTime givenTime, FlightPlan plan)
+        {
+            DateTime endTime = initialTime;
+            // go to last segment and check
+            foreach (Segment segment in plan.Segments)
+            {
+                TimeSpan timeSpan = new TimeSpan(segment.TimeSpanSeconds);
+                endTime += timeSpan;
+            }
+            if (givenTime < endTime)
+            {
+                return true;
+            }
+            return false;
+        }
         public IEnumerable<Flight> GetAllFlightsAllServers(string dateTime)
         {
             return null;
@@ -108,7 +138,8 @@ namespace FlightControlWeb.Models
         {
             Server server;
             bool removed = servers.Remove(id, out server);
-            if (removed) {
+            if (removed)
+            {
                 return "Success";
             }
             else
