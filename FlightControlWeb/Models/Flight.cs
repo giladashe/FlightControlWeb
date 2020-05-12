@@ -40,5 +40,16 @@ namespace FlightControlWeb.Models
             DateTime = plan.Location.DateTime;
         }
 
+        public Flight(string flightId, double longitude, double latitude, int passengers,
+            string companyName, string dateTime, bool isExternal)
+        {
+            FlightId = flightId;
+            Longitude = longitude;
+            Latitude = latitude;
+            Passengers = passengers;
+            CompanyName = companyName;
+            DateTime = dateTime;
+            IsExternal = isExternal;
+        }
     }
 }

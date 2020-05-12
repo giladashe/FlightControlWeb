@@ -15,12 +15,6 @@ namespace FlightControlWeb.Models
 
         public FlightPlan GetFlightPlan(string key)
         {
-            /* if(key == "5")
-             {
-                 flightPlans.TryAdd("wow", new FlightPlan(216, "baasfa",new InitialLocation(30.23423, 234.234, "2020asfafas"),
-                     new List<Segment>() { new Segment(40.23423, 2234.234, 365)}));
-                 return flightPlans["wow"];
-             }*/
             if (!flightPlans.ContainsKey(key))
             {
                 return null;
@@ -91,9 +85,9 @@ namespace FlightControlWeb.Models
 
             // todo add servers if isExternal == true
 
-            string timePattern = "yyyy-MM-ddTHH:mm:ssZ";
-            DateTime givenTime = DateTime.ParseExact(dateTime,
-                    timePattern, System.Globalization.CultureInfo.InvariantCulture);
+            DateTime givenTime = DateTime.Parse(dateTime);
+            givenTime = givenTime.AddHours(-2);
+           
             List<Flight> currentFlights = new List<Flight>();
 
             // goes over all flight plans and checks if flight is active at given time
@@ -101,8 +95,8 @@ namespace FlightControlWeb.Models
             foreach (KeyValuePair<string, FlightPlan> idAndPlan in flightPlans)
             {
                 string initialTimeToParse = idAndPlan.Value.Location.DateTime;
-                DateTime initialTime = DateTime.ParseExact(initialTimeToParse,
-                    timePattern, System.Globalization.CultureInfo.InvariantCulture);
+                DateTime initialTime = DateTime.Parse(initialTimeToParse);
+                initialTime = initialTime.AddHours(-2);
                 int comparison = initialTime.CompareTo(givenTime);
                 // Or time is at the beginning of flight or it's inside a running flight
                 if (comparison == 0)
@@ -112,7 +106,7 @@ namespace FlightControlWeb.Models
                 else if (comparison < 0)
                 {
                     // get flight with the current location andd add it to list of flights
-                    Flight flight = getFlightWithCurrentLocation(initialTime, givenTime, idAndPlan.Value,
+                    Flight flight = GetFlightWithCurrentLocation(initialTime, givenTime, idAndPlan.Value,
                         isExternal, idAndPlan.Key);
                     if (flight != null)
                     {
@@ -123,7 +117,7 @@ namespace FlightControlWeb.Models
             return currentFlights;
         }
 
-        private Flight getFlightWithCurrentLocation(DateTime initialTime, DateTime givenTime,
+        private Flight GetFlightWithCurrentLocation(DateTime initialTime, DateTime givenTime,
             FlightPlan plan, bool isExternal, string id)
         {
             Tuple<double, double> initialLocation =
