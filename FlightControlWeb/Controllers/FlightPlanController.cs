@@ -19,7 +19,6 @@ namespace FlightControlWeb.Controllers
         {
             this.manager = manager;
         }
-
        
         // GET: api/FlightPlans/5
         [HttpGet("{id}", Name = "GetFlightPlan")]
@@ -30,17 +29,10 @@ namespace FlightControlWeb.Controllers
 
         // POST: api/FlightPlans
         [HttpPost]
-        public void Post([FromBody] FlightPlan plan)
+        public void AddFlightPlan([FromBody] FlightPlan plan)
         {
             string answer = manager.InsertFlightPlan(plan);
             Console.WriteLine(answer);
-        }
-
-        // DELETE: api/ApiWithActions/5
-        [HttpDelete("{id}")]
-        public void Delete(string id)
-        {
-            string answer = manager.DeleteFlight(id);
         }
     }
 }

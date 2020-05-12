@@ -29,7 +29,7 @@ namespace FlightControlWeb.Controllers
 
         // POST: api/Servers
         [HttpPost]
-        public void Post([FromBody] Server server)
+        public void InsertNewServer([FromBody] Server server)
         {
             string response = manager.InsertServer(server);
         }
@@ -37,7 +37,7 @@ namespace FlightControlWeb.Controllers
 
         // DELETE: api/ApiWithActions/5
         [HttpDelete("{id}")]
-        public void Delete(string id)
+        public void DeleteServer(string id)
         {
             string response = manager.DeleteServer(id);
         }

@@ -75,7 +75,7 @@ namespace FlightControlWeb.Models
             }
             else
             {
-                return "not inside";
+                return "failed to remove";
             }
         }
         

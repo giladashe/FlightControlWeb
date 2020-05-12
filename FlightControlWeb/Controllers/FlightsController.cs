@@ -29,18 +29,9 @@ namespace FlightControlWeb.Controllers
             return manager.GetAllFlights(relative_to,isExternal);
         }
 
-
-        /*// GET: api/Flights/5
-        [HttpGet("{id}","{}", Name = "GetFlightsAllServers")]
-        public IEnumerable<Flight> GetFlights(string date)
-        {
-
-            return null;
-        }*/
-
         // DELETE: api/ApiWithActions/5
         [HttpDelete("{id}")]
-        public string Delete(string id)
+        public string DeleteFlight(string id)
         {
             string answer = manager.DeleteFlight(id);
             return answer;
