@@ -20,11 +20,15 @@ namespace FlightControlWeb.Controllers
         }
 
         // GET: api/Flights?relative_to=<DATE_TIME>
-        [HttpGet("{request}", Name = "GetAllFlightsFromServer")]
-        public IEnumerable<Flight> GetAllFlightsFromServer(HttpRequest request)
+        [HttpGet]
+        public IEnumerable<Flight> GetAllFlightsFromServer(string relative_to)
         {
-            return null;
+            string request = Request.QueryString.Value;
+            bool isExternal = request.Contains("sync_all");
+            
+            return manager.GetAllFlights(relative_to,isExternal);
         }
+
 
         /*// GET: api/Flights/5
         [HttpGet("{id}","{}", Name = "GetFlightsAllServers")]

@@ -29,7 +29,7 @@ namespace FlightControlWeb.Models
         [JsonProperty("is_external")]
         public bool IsExternal { get; set; }
 
-        public Flight(string id,bool isExternal, FlightPlan plan)
+        public Flight(string id, bool isExternal, FlightPlan plan)
         {
             FlightId = id;
             IsExternal = isExternal;

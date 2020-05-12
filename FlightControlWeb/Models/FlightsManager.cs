@@ -35,29 +35,35 @@ namespace FlightControlWeb.Models
 
         public string InsertFlightPlan(FlightPlan flightPlan)
         {
-            Random random = new Random();
-            string characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            string numbers = "0123456789";
-            string flightId = "";
-            // Makes a unique ID.
-            for (int i = 0; i < 2; i++)
-            {
-                flightId += characters[random.Next(characters.Length)];
-            }
-            for (int j = 0; j < 6; j++)
-            {
-                flightId += numbers[random.Next(numbers.Length)];
-            }
+            string flightId = makeUniqueId();
             if (!flightPlans.ContainsKey(flightId))
             {
                 flightPlans[flightId] = flightPlan;
             }
             else
             {
-                flightId = "0";
+                flightId = null;
             }
 
             return flightId;
+        }
+
+        // makes 8 characters unique id
+        private string makeUniqueId()
+        {
+            Random random = new Random();
+            string characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            string numbers = "0123456789";
+            string id = "";
+            for (int i = 0; i < 2; i++)
+            {
+                id += characters[random.Next(characters.Length)];
+            }
+            for (int j = 0; j < 6; j++)
+            {
+                id += numbers[random.Next(numbers.Length)];
+            }
+            return id;
         }
 
         public string DeleteFlight(string id)
@@ -78,45 +84,101 @@ namespace FlightControlWeb.Models
                 return "not inside";
             }
         }
+        
 
-        public IEnumerable<Flight> GetAllFlights(string dateTime)
+        public IEnumerable<Flight> GetAllFlights(string dateTime, bool isExternal)
         {
+
+            // todo add servers if isExternal == true
+
+            string timePattern = "yyyy-MM-ddTHH:mm:ssZ";
             DateTime givenTime = DateTime.ParseExact(dateTime,
-                    "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.CultureInfo.InvariantCulture);
+                    timePattern, System.Globalization.CultureInfo.InvariantCulture);
             List<Flight> currentFlights = new List<Flight>();
+
+            // goes over all flight plans and checks if flight is active at given time
+            // if it's active put the flight with the current location in the list
             foreach (KeyValuePair<string, FlightPlan> idAndPlan in flightPlans)
             {
                 string initialTimeToParse = idAndPlan.Value.Location.DateTime;
                 DateTime initialTime = DateTime.ParseExact(initialTimeToParse,
-                    "yyyy-MM-ddTHH:mm:ssZ", System.Globalization.CultureInfo.InvariantCulture);
+                    timePattern, System.Globalization.CultureInfo.InvariantCulture);
                 int comparison = initialTime.CompareTo(givenTime);
-                // or it's the beginning of flight or it's inside a running flight
-                if (comparison == 0 || (comparison > 0 && CheckIfInside(initialTime,givenTime,idAndPlan.Value)))
+                // Or time is at the beginning of flight or it's inside a running flight
+                if (comparison == 0)
                 {
                     currentFlights.Add(new Flight(idAndPlan.Key, false, idAndPlan.Value));
+                }
+                else if (comparison < 0)
+                {
+                    // get flight with the current location andd add it to list of flights
+                    Flight flight = getFlightWithCurrentLocation(initialTime, givenTime, idAndPlan.Value,
+                        isExternal, idAndPlan.Key);
+                    if (flight != null)
+                    {
+                        currentFlights.Add(flight);
+                    }
                 }
             }
             return currentFlights;
         }
 
-        private bool CheckIfInside(DateTime initialTime, DateTime givenTime, FlightPlan plan)
+        private Flight getFlightWithCurrentLocation(DateTime initialTime, DateTime givenTime,
+            FlightPlan plan, bool isExternal, string id)
         {
-            DateTime endTime = initialTime;
-            // go to last segment and check
+            Tuple<double, double> initialLocation =
+                new Tuple<double, double>(plan.Location.Longitude, plan.Location.Latitude);
+            // go over all segments of flight and checks of it's inside it
             foreach (Segment segment in plan.Segments)
             {
-                TimeSpan timeSpan = new TimeSpan(segment.TimeSpanSeconds);
-                endTime += timeSpan;
+                double seconds = segment.TimeSpanSeconds;
+                Tuple<double, double> endLocation = new Tuple<double, double>(segment.Longitude, segment.Latitude);
+                DateTime endTime = initialTime.AddSeconds(seconds);
+                // if it's inside the segment get the current location according to time
+                if (givenTime >= initialTime && givenTime < endTime)
+                {
+                    Tuple<double, double> currentLocation = Interpolation(initialLocation, endLocation,
+                        initialTime, givenTime, seconds);
+                    Flight flight = new Flight(id, isExternal, plan);
+                    flight.Longitude = currentLocation.Item1;
+                    flight.Latitude = currentLocation.Item2;
+                    return flight;
+                }
+                initialTime = endTime;
+                initialLocation = endLocation;
             }
-            if (givenTime < endTime)
-            {
-                return true;
-            }
-            return false;
-        }
-        public IEnumerable<Flight> GetAllFlightsAllServers(string dateTime)
-        {
             return null;
+        }
+
+        private Tuple<double, double> Interpolation(Tuple<double, double> firstLocation,
+            Tuple<double, double> secondLocation, DateTime begin, DateTime now, double totalSeconds)
+        {
+            // time from beginning to given time
+            TimeSpan difference = now.Subtract(begin);
+            // relative time difference
+            double relativeDifference = difference.TotalSeconds / totalSeconds;
+            // calculate distance between initial location and end of segment
+            double distance = Math.Sqrt(Math.Pow((secondLocation.Item2 - firstLocation.Item2), 2)
+                + Math.Pow((secondLocation.Item1 - firstLocation.Item1), 2));
+
+            // calculate the wanted distance from initial location (according to relative 
+            // differnece of time)
+            double wantedDistance = relativeDifference * distance;
+
+            // calculate Longitude and Latitude according to wanted distance
+            double wantedLongitude = firstLocation.Item1
+                - (wantedDistance * (firstLocation.Item1 - secondLocation.Item1) / distance);
+            if (wantedLongitude < 0)
+            {
+                wantedLongitude = -wantedLongitude;
+            }
+            double wantedLatitude = firstLocation.Item2
+                - (wantedDistance * (firstLocation.Item2 - secondLocation.Item2) / distance);
+            if (wantedLatitude < 0)
+            {
+                wantedLatitude = -wantedLatitude;
+            }
+            return new Tuple<double, double>(wantedLongitude, wantedLatitude);
         }
 
         public IEnumerable<Server> GetAllServers()

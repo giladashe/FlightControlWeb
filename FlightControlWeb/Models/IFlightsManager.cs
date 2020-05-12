@@ -17,9 +17,7 @@ namespace FlightControlWeb.Models
 
         string DeleteFlight(string id);
 
-        IEnumerable<Flight> GetAllFlights(string dateTime);
-
-        IEnumerable<Flight> GetAllFlightsAllServers(string dateTime);
+        IEnumerable<Flight> GetAllFlights(string dateTime, bool isExternal);
 
         IEnumerable<Server> GetAllServers();
 

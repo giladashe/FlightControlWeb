@@ -16,10 +16,10 @@ namespace FlightControlWeb.Models
         public double Latitude { get; set; }
 
         [JsonPropertyName("timespan_seconds")]
-        public long TimeSpanSeconds { get; set; }
+        public double TimeSpanSeconds { get; set; }
 
         [JsonConstructor]
-        public Segment(double longitude, double latitude, long timeSpanSeconds)
+        public Segment(double longitude, double latitude, double timeSpanSeconds)
         {
             Longitude = longitude;
             Latitude = latitude;
