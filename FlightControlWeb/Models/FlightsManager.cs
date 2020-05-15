@@ -1,16 +1,25 @@
 ﻿using Microsoft.CodeAnalysis;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace FlightControlWeb.Models
 {
     public class FlightsManager : IFlightsManager
     {
-        private static ConcurrentDictionary<string, FlightPlan> flightPlans = new ConcurrentDictionary<string, FlightPlan>();
-        private static ConcurrentDictionary<string, Server> servers = new ConcurrentDictionary<string, Server>();
+        private static ConcurrentDictionary<string, FlightPlan> flightPlans =
+            new ConcurrentDictionary<string, FlightPlan>();
+        private static ConcurrentDictionary<string, Server> servers =
+            new ConcurrentDictionary<string, Server>();
 
 
         public FlightPlan GetFlightPlan(string key)
@@ -75,28 +84,35 @@ namespace FlightControlWeb.Models
             }
             else
             {
-                return "not inside";
+                return "failed to remove";
             }
         }
-        
 
-        public IEnumerable<Flight> GetAllFlights(string dateTime, bool isExternal)
+
+        public async Task<List<Flight>> GetAllFlights(string dateTime, bool isExternal)
         {
+            List<Flight> currentFlights = new List<Flight>();
 
             // todo add servers if isExternal == true
+            if (isExternal)
+            {
+                List<Flight> fromServers = await GetFlightsFromServers(dateTime);
+                foreach (Flight flight in fromServers)
+                {
+                    flight.IsExternal = true;
+                }
+                currentFlights.AddRange(fromServers);
+            }
+            isExternal = false;
 
-            DateTime givenTime = DateTime.Parse(dateTime);
-            givenTime = givenTime.AddHours(-2);
-           
-            List<Flight> currentFlights = new List<Flight>();
+            DateTime givenTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(dateTime));
 
             // goes over all flight plans and checks if flight is active at given time
             // if it's active put the flight with the current location in the list
             foreach (KeyValuePair<string, FlightPlan> idAndPlan in flightPlans)
             {
                 string initialTimeToParse = idAndPlan.Value.Location.DateTime;
-                DateTime initialTime = DateTime.Parse(initialTimeToParse);
-                initialTime = initialTime.AddHours(-2);
+                DateTime initialTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(initialTimeToParse));
                 int comparison = initialTime.CompareTo(givenTime);
                 // Or time is at the beginning of flight or it's inside a running flight
                 if (comparison == 0)
@@ -106,7 +122,7 @@ namespace FlightControlWeb.Models
                 else if (comparison < 0)
                 {
                     // get flight with the current location andd add it to list of flights
-                    Flight flight = GetFlightWithCurrentLocation(initialTime, givenTime, idAndPlan.Value,
+                    Flight flight = await GetFlightWithCurrentLocation(initialTime, givenTime, idAndPlan.Value,
                         isExternal, idAndPlan.Key);
                     if (flight != null)
                     {
@@ -117,7 +133,7 @@ namespace FlightControlWeb.Models
             return currentFlights;
         }
 
-        private Flight GetFlightWithCurrentLocation(DateTime initialTime, DateTime givenTime,
+        private async Task<Flight> GetFlightWithCurrentLocation(DateTime initialTime, DateTime givenTime,
             FlightPlan plan, bool isExternal, string id)
         {
             Tuple<double, double> initialLocation =
@@ -131,7 +147,7 @@ namespace FlightControlWeb.Models
                 // if it's inside the segment get the current location according to time
                 if (givenTime >= initialTime && givenTime < endTime)
                 {
-                    Tuple<double, double> currentLocation = Interpolation(initialLocation, endLocation,
+                    Tuple<double, double> currentLocation = await Interpolation(initialLocation, endLocation,
                         initialTime, givenTime, seconds);
                     Flight flight = new Flight(id, isExternal, plan);
                     flight.Longitude = currentLocation.Item1;
@@ -144,9 +160,13 @@ namespace FlightControlWeb.Models
             return null;
         }
 
-        private Tuple<double, double> Interpolation(Tuple<double, double> firstLocation,
+        private async Task<Tuple<double, double>> Interpolation(Tuple<double, double> firstLocation,
             Tuple<double, double> secondLocation, DateTime begin, DateTime now, double totalSeconds)
         {
+            if (firstLocation.Equals(secondLocation))
+            {
+                return firstLocation;
+            }
             // time from beginning to given time
             TimeSpan difference = now.Subtract(begin);
             // relative time difference
@@ -155,23 +175,13 @@ namespace FlightControlWeb.Models
             double distance = Math.Sqrt(Math.Pow((secondLocation.Item2 - firstLocation.Item2), 2)
                 + Math.Pow((secondLocation.Item1 - firstLocation.Item1), 2));
 
-            // calculate the wanted distance from initial location (according to relative 
-            // differnece of time)
-            double wantedDistance = relativeDifference * distance;
+            // calculate the wanted longitude and latitude from initial location
+            //(according to relative differnece of time)
+            double wantedLongitude = firstLocation.Item1 + (secondLocation.Item1 - firstLocation.Item1)
+                * relativeDifference;
+            double wantedLatitude = firstLocation.Item2 + (secondLocation.Item2 - firstLocation.Item2)
+                            * relativeDifference;
 
-            // calculate Longitude and Latitude according to wanted distance
-            double wantedLongitude = firstLocation.Item1
-                - (wantedDistance * (firstLocation.Item1 - secondLocation.Item1) / distance);
-            if (wantedLongitude < 0)
-            {
-                wantedLongitude = -wantedLongitude;
-            }
-            double wantedLatitude = firstLocation.Item2
-                - (wantedDistance * (firstLocation.Item2 - secondLocation.Item2) / distance);
-            if (wantedLatitude < 0)
-            {
-                wantedLatitude = -wantedLatitude;
-            }
             return new Tuple<double, double>(wantedLongitude, wantedLatitude);
         }
 
@@ -203,5 +213,68 @@ namespace FlightControlWeb.Models
                 return "Not Inside";
             }
         }
+
+
+        private async Task<List<Flight>> GetFlightsFromServers(string relativeTo)
+        {
+            List<Flight> serversFlights = new List<Flight>();
+            foreach (Server server in servers.Values)
+            {
+                JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+                {
+                    DateParseHandling = DateParseHandling.None
+                };
+                dynamic response = await MakeRequest(server.ServerURL +
+                    "/Flights?relative_to=" + relativeTo);
+                foreach (var item in response)
+                {
+                    serversFlights.Add(makeFlightFromJson(item));
+                }
+            }
+
+            return serversFlights;
+        }
+
+        public Flight makeFlightFromJson(JToken flight)
+        {
+            int passengers = (int)flight["passengers"];
+            string flightId = (string)flight["flight_id"];
+            double longitude = (double)flight["longitude"];
+            double latitude = (double)flight["longitude"];
+            string companyName = (string)flight["company_name"];
+            string dateTime = (string)flight["date_time"];
+            bool isExternal = (bool)flight["isExternal"];
+
+            return new Flight(flightId, longitude, latitude, passengers, companyName, dateTime, isExternal);
+        }
+
+        public string HttpGet(string URI)
+        {
+            WebClient client = new WebClient();
+
+            // Add a user agent header in case the 
+            // requested URI contains a query.
+
+            client.Headers.Add("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
+
+            Stream data = client.OpenRead(URI);
+            StreamReader reader = new StreamReader(data);
+            string s = reader.ReadToEnd();
+            data.Close();
+            reader.Close();
+
+            return s;
+        }
+
+
+        public static async Task<dynamic> MakeRequest(string url)
+        {
+            using var client = new HttpClient();
+            var result = await client.GetStringAsync(url);
+            dynamic json = JsonConvert.DeserializeObject(result);
+            return json;
+        }
+
+
     }
 }
