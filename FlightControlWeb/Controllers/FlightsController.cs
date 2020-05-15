@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using FlightControlWeb.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace FlightControlWeb.Controllers
 {
@@ -21,12 +23,14 @@ namespace FlightControlWeb.Controllers
 
         // GET: api/Flights?relative_to=<DATE_TIME>
         [HttpGet]
-        public IEnumerable<Flight> GetAllFlightsFromServer(string relative_to)
+        public async Task<List<Flight>> GetAllFlights(string relative_to)
         {
             string request = Request.QueryString.Value;
             bool isExternal = request.Contains("sync_all");
-            
-            return manager.GetAllFlights(relative_to,isExternal);
+
+            List<Flight> thisFllights = await manager.GetAllFlights(relative_to, isExternal);
+
+            return thisFllights;
         }
 
         // DELETE: api/ApiWithActions/5

@@ -1,4 +1,4 @@
 {
     "server_id": "fgthdfszfsdh",
-    "server_url": "127.0.0.1:6400/api"
+    "server_url": "https://localhost:5005/api"
 }
