@@ -2,21 +2,23 @@
 <html lang="en">
 <head>
     <title>My Flight Simulator</title>
+
+    <!--
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+    -->
+    <!-- Popper JS -->
+    <script src="Bootstrap/js/jquery-3.4.1.slim.min.js"></script>
 
     <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="Bootstrap/css/bootstrap.min.css">
 
     <!-- jQuery library -->
     <script src="Bootstrap/js/bootstrap.min.js"></script>
-
-    <!-- Popper JS -->
-    <script src="Bootstrap/js/jquery-3.4.1.slim.min.js"></script>
 
     <!-- Latest compiled JavaScript -->
     <script src="Bootstrap/js/popper.min.js"></script>
@@ -38,22 +40,20 @@
         /* Always set the map height explicitly to define the size of the div
         * element that contains the map. */
         #map {
-            height: 88%;
+            height: 70%;
             width: 105%;
         }
         /* Optional: Makes the sample page fill the window. */
         html, body {
-            height: 70%;
+            height: 65%;
             margin: 0;
             padding: 0;
         }
     </style>
 
 
-
 </head>
 <body>
-
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-6">
@@ -70,201 +70,10 @@
                 </script>
                 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAx7LLopSO76G5tucyaoefZKVc3TkAypv4&callback=initMap"
                         async defer></script>
-            </div>
-            <div class="col-md-6">
-                <h3> Internal Flights</h3>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>
-                                
-                            </th>
-                            <th>
-                                Flight ID
-                            </th>
-                            <th>
-                                Company
-                            </th>
-                            <th>
-                                Remove
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>
-                                1
-                            </td>
-                            <td>
-                                TB - Monthly
-                            </td>
-                            <td>
-                                01/04/2012
-                            </td>
-                            <td>
-                                Default
-                            </td>
-                        </tr>
-                        <tr class="table-active">
-                            <td>
-                                1
-                            </td>
-                            <td>
-                                TB - Monthly
-                            </td>
-                            <td>
-                                01/04/2012
-                            </td>
-                            <td>
-                                Approved
-                            </td>
-                        </tr>
-                        <tr class="table-success">
-                            <td>
-                                2
-                            </td>
-                            <td>
-                                TB - Monthly
-                            </td>
-                            <td>
-                                02/04/2012
-                            </td>
-                            <td>
-                                Declined
-                            </td>
-                        </tr>
-                        <tr class="table-warning">
-                            <td>
-                                3
-                            </td>
-                            <td>
-                                TB - Monthly
-                            </td>
-                            <td>
-                                03/04/2012
-                            </td>
-                            <td>
-                                Pending
-                            </td>
-                        </tr>
-                        <tr class="table-danger">
-                            <td>
-                                4
-                            </td>
-                            <td>
-                                TB - Monthly
-                            </td>
-                            <td>
-                                04/04/2012
-                            </td>
-                            <td>
-                                Call in to confirm
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <h3> External Flights</h3>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>
 
-                            </th>
-                            <th>
-                                Flight ID
-                            </th>
-                            <th>
-                                Company
-                            </th>
-                            <th>
-                                Remove
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>
-                                1
-                            </td>
-                            <td>
-                                TB - Monthly
-                            </td>
-                            <td>
-                                01/04/2012
-                            </td>
-                            <td>
-                                Default
-                            </td>
-                        </tr>
-                        <tr class="table-active">
-                            <td>
-                                1
-                            </td>
-                            <td>
-                                TB - Monthly
-                            </td>
-                            <td>
-                                01/04/2012
-                            </td>
-                            <td>
-                                Approved
-                            </td>
-                        </tr>
-                        <tr class="table-success">
-                            <td>
-                                2
-                            </td>
-                            <td>
-                                TB - Monthly
-                            </td>
-                            <td>
-                                02/04/2012
-                            </td>
-                            <td>
-                                Declined
-                            </td>
-                        </tr>
-                        <tr class="table-warning">
-                            <td>
-                                3
-                            </td>
-                            <td>
-                                TB - Monthly
-                            </td>
-                            <td>
-                                03/04/2012
-                            </td>
-                            <td>
-                                Pending
-                            </td>
-                        </tr>
-                        <tr class="table-danger">
-                            <td>
-                                4
-                            </td>
-                            <td>
-                                TB - Monthly
-                            </td>
-                            <td>
-                                04/04/2012
-                            </td>
-                            <td>
-                                Call in to confirm
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-12">
-                <h3>  Flight Details</h3>
-                <table class="table">
+                <table class="table" id="flightDetails">
                     <thead>
                         <tr>
-                            <th>
-
-                            </th>
                             <th>
                                 Flight ID
                             </th>
@@ -277,122 +86,142 @@
                             <th>
                                 Initial Location
                             </th>
-                            <th>
-                                Date time
-                            </th>
-
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>
-                                1
                             </td>
                             <td>
-                                TB - Monthly
                             </td>
                             <td>
-                                01/04/2012
                             </td>
                             <td>
-                                Default
                             </td>
                             <td>
-                                Default
                             </td>
-                            <td>
-                                Default
-                            </td>
-
                         </tr>
-                        <tr class="table-active">
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-5">
+                <table class="table" id="internalFlights">
+                    <thead>
+                        <tr>
+                            <th>
+                                Flight ID
+                            </th>
+                            <th>
+                                Company
+                            </th>
+                            <th>
+                                Remove
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
                             <td>
-                                1
                             </td>
                             <td>
-                                TB - Monthly
                             </td>
                             <td>
-                                01/04/2012
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
                             </td>
                             <td>
-                                Approved
                             </td>
                             <td>
-                                Default
                             </td>
-                            <td>
-                                Default
-                            </td>
-
                         </tr>
                         <tr class="table-success">
                             <td>
-                                2
                             </td>
                             <td>
-                                TB - Monthly
                             </td>
                             <td>
-                                02/04/2012
                             </td>
-                            <td>
-                                Declined
-                            </td>
-                            <td>
-                                Default
-                            </td>
-                            <td>
-                                Default
-                            </td>
-
                         </tr>
-                        <tr class="table-warning">
+                        <tr>
                             <td>
-                                3
                             </td>
                             <td>
-                                TB - Monthly
                             </td>
                             <td>
-                                03/04/2012
                             </td>
-                            <td>
-                                Pending
-                            </td>
-                            <td>
-                                Default
-                            </td>
-                            <td>
-                                Default
-                            </td>
-
                         </tr>
-                        <tr class="table-danger">
+                        <tr>
                             <td>
-                                4
                             </td>
                             <td>
-                                TB - Monthly
                             </td>
                             <td>
-                                04/04/2012
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table class="table" id="externalFlights">
+                    <thead>
+                        <tr>
+                            <th>
+                                Flight ID
+                            </th>
+                            <th>
+                                Company
+                            </th>
+                            <th>
+                                Remove
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
                             </td>
                             <td>
-                                Call in to confirm
                             </td>
                             <td>
-                                Default
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
                             </td>
                             <td>
-                                Default
                             </td>
-
+                            <td>
+                            </td>
+                        </tr>
+                        <tr class="table-success">
+                            <td>
+                            </td>
+                            <td>
+                            </td>
+                            <td>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                            </td>
+                            <td>
+                            </td>
+                            <td>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                            </td>
+                            <td>
+                            </td>
+                            <td>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
+    <script src="Bootstrap/js/flight.js"></script>
 </body>
 </html>
