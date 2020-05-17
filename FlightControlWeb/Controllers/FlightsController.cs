@@ -23,14 +23,12 @@ namespace FlightControlWeb.Controllers
 
         // GET: api/Flights?relative_to=<DATE_TIME>
         [HttpGet]
-        public async Task<List<Flight>> GetAllFlights(string relative_to)
+        public async Task<IEnumerable<Flight>> GetAllFlights(string relative_to)
         {
             string request = Request.QueryString.Value;
             bool isExternal = request.Contains("sync_all");
 
-            List<Flight> thisFllights = await manager.GetAllFlights(relative_to, isExternal);
-
-            return thisFllights;
+            return await manager.GetAllFlights(relative_to, isExternal);
         }
 
         // DELETE: api/ApiWithActions/5

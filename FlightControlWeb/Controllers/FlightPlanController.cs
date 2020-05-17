@@ -22,9 +22,9 @@ namespace FlightControlWeb.Controllers
        
         // GET: api/FlightPlans/5
         [HttpGet("{id}", Name = "GetFlightPlan")]
-        public FlightPlan GetFlightPlan(string id)
+        public async Task<FlightPlan> GetFlightPlan(string id)
         {
-            return manager.GetFlightPlan(id);
+            return await manager.GetFlightPlan(id);
         }
 
         // POST: api/FlightPlans
