@@ -20,20 +20,23 @@ namespace FlightControlWeb.Models
             new ConcurrentDictionary<string, FlightPlan>();
         private static ConcurrentDictionary<string, Server> servers =
             new ConcurrentDictionary<string, Server>();
+        private static ConcurrentDictionary<string, Server> idFromServers =
+            new ConcurrentDictionary<string, Server>();
 
 
-        public FlightPlan GetFlightPlan(string key)
+        public async Task<FlightPlan> GetFlightPlan(string key)
         {
-            if (!flightPlans.ContainsKey(key))
+            FlightPlan plan = null;
+            if (flightPlans.ContainsKey(key))
             {
-                return null;
+                plan = flightPlans[key];
             }
-            FlightPlan flightPlan = flightPlans[key];
-            if (flightPlan == null)
+            else if(idFromServers.ContainsKey(key))
             {
-                Console.WriteLine("doesn't exist");
+                Server server = idFromServers[key];
+                plan = await GetFlightPlanFromServer(key,server);
             }
-            return flightPlan;
+            return plan;
         }
 
         public string InsertFlightPlan(FlightPlan flightPlan)
@@ -91,9 +94,10 @@ namespace FlightControlWeb.Models
 
         public async Task<List<Flight>> GetAllFlights(string dateTime, bool isExternal)
         {
+
             List<Flight> currentFlights = new List<Flight>();
 
-            // todo add servers if isExternal == true
+            // get flights from server if is external
             if (isExternal)
             {
                 List<Flight> fromServers = await GetFlightsFromServers(dateTime);
@@ -111,29 +115,40 @@ namespace FlightControlWeb.Models
             // if it's active put the flight with the current location in the list
             foreach (KeyValuePair<string, FlightPlan> idAndPlan in flightPlans)
             {
-                string initialTimeToParse = idAndPlan.Value.Location.DateTime;
-                DateTime initialTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(initialTimeToParse));
-                int comparison = initialTime.CompareTo(givenTime);
-                // Or time is at the beginning of flight or it's inside a running flight
-                if (comparison == 0)
+                Flight newFlight = AddFlightFromThisServer(idAndPlan, givenTime, isExternal);
+                if (newFlight != null)
                 {
-                    currentFlights.Add(new Flight(idAndPlan.Key, false, idAndPlan.Value));
-                }
-                else if (comparison < 0)
-                {
-                    // get flight with the current location andd add it to list of flights
-                    Flight flight = await GetFlightWithCurrentLocation(initialTime, givenTime, idAndPlan.Value,
-                        isExternal, idAndPlan.Key);
-                    if (flight != null)
-                    {
-                        currentFlights.Add(flight);
-                    }
+                    currentFlights.Add(newFlight);
                 }
             }
             return currentFlights;
         }
 
-        private async Task<Flight> GetFlightWithCurrentLocation(DateTime initialTime, DateTime givenTime,
+        private Flight AddFlightFromThisServer(KeyValuePair<string, FlightPlan> idAndPlan, DateTime givenTime, bool isExternal)
+        {
+            string initialTimeToParse = idAndPlan.Value.Location.DateTime;
+            DateTime initialTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(initialTimeToParse));
+            int comparison = initialTime.CompareTo(givenTime);
+            // Or time is at the beginning of flight or it's inside a running flight
+            if (comparison == 0)
+            {
+                return new Flight(idAndPlan.Key, false, idAndPlan.Value);
+            }
+            else if (comparison < 0)
+            {
+                // get flight with the current location
+                Flight flight = GetFlightWithCurrentLocation(initialTime, givenTime, idAndPlan.Value,
+                    isExternal, idAndPlan.Key);
+                if (flight != null)
+                {
+                    return flight;
+                }
+            }
+            return null;
+        }
+
+
+        private Flight GetFlightWithCurrentLocation(DateTime initialTime, DateTime givenTime,
             FlightPlan plan, bool isExternal, string id)
         {
             Tuple<double, double> initialLocation =
@@ -147,7 +162,7 @@ namespace FlightControlWeb.Models
                 // if it's inside the segment get the current location according to time
                 if (givenTime >= initialTime && givenTime < endTime)
                 {
-                    Tuple<double, double> currentLocation = await Interpolation(initialLocation, endLocation,
+                    Tuple<double, double> currentLocation = Interpolation(initialLocation, endLocation,
                         initialTime, givenTime, seconds);
                     Flight flight = new Flight(id, isExternal, plan);
                     flight.Longitude = currentLocation.Item1;
@@ -160,7 +175,7 @@ namespace FlightControlWeb.Models
             return null;
         }
 
-        private async Task<Tuple<double, double>> Interpolation(Tuple<double, double> firstLocation,
+        private Tuple<double, double> Interpolation(Tuple<double, double> firstLocation,
             Tuple<double, double> secondLocation, DateTime begin, DateTime now, double totalSeconds)
         {
             if (firstLocation.Equals(secondLocation))
@@ -214,28 +229,60 @@ namespace FlightControlWeb.Models
             }
         }
 
+        private async Task<FlightPlan> GetFlightPlanFromServer(string planId, Server server)
+        {
+            FlightPlan flightPlan = null;
+            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+            {
+                DateParseHandling = DateParseHandling.None
+            };
+            dynamic response = await MakeRequest(server.ServerURL +
+                "/FlightPlan/" + planId);
+            if (response != null)
+            {
+                flightPlan = MakeFlightPlanFromJson(response);
+            }
+            return flightPlan;
+        }
 
         private async Task<List<Flight>> GetFlightsFromServers(string relativeTo)
         {
             List<Flight> serversFlights = new List<Flight>();
             foreach (Server server in servers.Values)
             {
-                JsonConvert.DefaultSettings = () => new JsonSerializerSettings
-                {
-                    DateParseHandling = DateParseHandling.None
-                };
-                dynamic response = await MakeRequest(server.ServerURL +
-                    "/Flights?relative_to=" + relativeTo);
-                foreach (var item in response)
-                {
-                    serversFlights.Add(makeFlightFromJson(item));
-                }
+                serversFlights.AddRange(await GetFlightsFromServer(relativeTo, server));
             }
-
             return serversFlights;
         }
 
-        public Flight makeFlightFromJson(JToken flight)
+
+        private async Task<List<Flight>> GetFlightsFromServer(string relativeTo, Server server)
+        {
+            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+            {
+                DateParseHandling = DateParseHandling.None
+            };
+            List<Flight> flights = new List<Flight>();
+            dynamic response = await MakeRequest(server.ServerURL +
+                "/Flights?relative_to=" + relativeTo);
+            if (response == null)
+            {
+                return flights;
+            }
+            foreach (var item in response)
+            {
+                Flight newFlight = MakeFlightFromJson(item);
+                flights.Add(newFlight);
+                if (!idFromServers.ContainsKey(newFlight.FlightId))
+                {
+                    idFromServers.TryAdd(newFlight.FlightId, server);
+                }
+            }
+            return flights;
+        }
+
+
+        public Flight MakeFlightFromJson(JToken flight)
         {
             int passengers = (int)flight["passengers"];
             string flightId = (string)flight["flight_id"];
@@ -243,29 +290,32 @@ namespace FlightControlWeb.Models
             double latitude = (double)flight["longitude"];
             string companyName = (string)flight["company_name"];
             string dateTime = (string)flight["date_time"];
-            bool isExternal = (bool)flight["isExternal"];
+            bool isExternal = (bool)flight["is_external"];
 
             return new Flight(flightId, longitude, latitude, passengers, companyName, dateTime, isExternal);
         }
 
-        public string HttpGet(string URI)
+        public FlightPlan MakeFlightPlanFromJson(JToken flightPlan)
         {
-            WebClient client = new WebClient();
+            int passengers = (int)flightPlan["passengers"];
+            string companyName = (string)flightPlan["company_name"];
+            double longitude = (double)flightPlan["initial_location"]["longitude"];
+            double latitude = (double)flightPlan["initial_location"]["latitude"];
+            string dateTime = (string)flightPlan["initial_location"]["date_time"];
+            InitialLocation location = new InitialLocation(longitude, latitude, dateTime);
+            JArray jsonSegments = (JArray)flightPlan["segments"];
+            List<Segment> segments = new List<Segment>();
+            foreach (var segment in jsonSegments)
+            {
+                double longitudeSegment = (double)segment["longitude"];
+                double latitudeSegment = (double)segment["latitude"];
+                double timeSpan = (double)segment["timespan_seconds"];
+                Segment newSegment = new Segment(longitudeSegment, latitudeSegment, timeSpan);
+                segments.Add(newSegment);
+            }
 
-            // Add a user agent header in case the 
-            // requested URI contains a query.
-
-            client.Headers.Add("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
-
-            Stream data = client.OpenRead(URI);
-            StreamReader reader = new StreamReader(data);
-            string s = reader.ReadToEnd();
-            data.Close();
-            reader.Close();
-
-            return s;
+            return new FlightPlan(passengers,companyName,location,segments);
         }
-
 
         public static async Task<dynamic> MakeRequest(string url)
         {
@@ -274,7 +324,6 @@ namespace FlightControlWeb.Models
             dynamic json = JsonConvert.DeserializeObject(result);
             return json;
         }
-
 
     }
 }

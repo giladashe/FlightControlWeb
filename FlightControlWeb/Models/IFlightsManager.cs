@@ -11,7 +11,7 @@ namespace FlightControlWeb.Models
     public interface IFlightsManager
     {
 
-        FlightPlan GetFlightPlan(string key);
+        Task<FlightPlan> GetFlightPlan(string key);
 
         string InsertFlightPlan(FlightPlan flightPlan);
 
