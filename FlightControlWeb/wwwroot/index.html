@@ -32,7 +32,7 @@
             crossorigin="">
     </script>
     <title>Simple Map</title>
-    <meta name="viewport" content="initial-scale=1.0">
+    <!--<meta name="viewport" content="initial-scale=1.0">-->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
@@ -44,12 +44,20 @@
             width: 105%;
         }
         /* Optional: Makes the sample page fill the window. */
-        html, body {
+        body, html {
             height: 65%;
             margin: 0;
             padding: 0;
         }
+        body {
+            background-image: url("/Bootstrap/css/sky.jpg");
+        }
+
+        h3 {
+            text-align: center;
+        }
     </style>
+
 
 
 </head>
@@ -72,6 +80,9 @@
                         async defer></script>
 
                 <table class="table" id="flightDetails">
+                    <h3>
+                        Flight details
+                    </h3>
                     <thead>
                         <tr>
                             <th>
@@ -88,23 +99,14 @@
                             </th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>
-                            </td>
-                            <td>
-                            </td>
-                            <td>
-                            </td>
-                            <td>
-                            </td>
-                            <td>
-                            </td>
-                        </tr>
+                    <tbody class="table" id="flightDetailsBody">
                     </tbody>
                 </table>
             </div>
             <div class="col-md-5">
+                <h3>
+                    Internal flights
+                </h3>
                 <table class="table" id="internalFlights">
                     <thead>
                         <tr>
@@ -115,21 +117,19 @@
                                 Company
                             </th>
                             <th>
+                                Date time
+                            </th>
+                            <th>
                                 Remove
                             </th>
                         </tr>
                     </thead>
                     <tbody id="internalFlightsBody">
-                        <tr class="table-success">
-                            <td>
-                            </td>
-                            <td>
-                            </td>
-                            <td>
-                            </td>
-                        </tr>
                     </tbody>
                 </table>
+                <h3>
+                    External flights
+                </h3>
                 <table class="table" id="externalFlights">
                     <thead>
                         <tr>
@@ -140,19 +140,26 @@
                                 Company
                             </th>
                             <th>
+                                Date time
+                            </th>
+                            <th>
                                 Remove
                             </th>
                         </tr>
                     </thead>
                     <tbody id="externalFlightsBody">
-                        <tr class="table-success">
-                            <td>
-                            </td>
-                            <td>
-                            </td>
-                            <td>
-                            </td>
-                        </tr>
+                        <!--
+                                <tr>
+                                    <td>
+                                    </td>
+                                    <td>
+                                    </td>
+                                    <td>
+                                    </td>
+                                    <td>
+                                    </td>
+                                </tr>
+                        -->
                     </tbody>
                 </table>
             </div>
