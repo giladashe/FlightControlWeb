@@ -16,12 +16,19 @@ namespace FlightControlWeb.Models
 {
     public class FlightsManager : IFlightsManager
     {
-        private static ConcurrentDictionary<string, FlightPlan> flightPlans =
-            new ConcurrentDictionary<string, FlightPlan>();
-        private static ConcurrentDictionary<string, Server> servers =
-            new ConcurrentDictionary<string, Server>();
-        private static ConcurrentDictionary<string, Server> idFromServers =
-            new ConcurrentDictionary<string, Server>();
+        private static ConcurrentDictionary<string, FlightPlan> flightPlans;
+        private static ConcurrentDictionary<string, Server> servers;
+        //maps from flight plan id to server id
+        private static ConcurrentDictionary<string, string> idFromServers;
+
+        public FlightsManager(ConcurrentDictionary<string, FlightPlan> flightPlanDict,
+            ConcurrentDictionary<string, Server> serversDict,
+            ConcurrentDictionary<string, string> idFromServersDict)
+        {
+            flightPlans = flightPlanDict;
+            servers = serversDict;
+            idFromServers = idFromServersDict;
+        }
 
 
         public async Task<FlightPlan> GetFlightPlan(string key)
@@ -33,7 +40,7 @@ namespace FlightControlWeb.Models
             }
             else if(idFromServers.ContainsKey(key))
             {
-                Server server = idFromServers[key];
+                Server server = servers[idFromServers[key]];
                 plan = await GetFlightPlanFromServer(key,server);
             }
             return plan;
@@ -41,7 +48,7 @@ namespace FlightControlWeb.Models
 
         public string InsertFlightPlan(FlightPlan flightPlan)
         {
-            string flightId = makeUniqueId();
+            string flightId = MakeUniqueId();
             if (!flightPlans.ContainsKey(flightId))
             {
                 flightPlans[flightId] = flightPlan;
@@ -55,7 +62,7 @@ namespace FlightControlWeb.Models
         }
 
         // makes 8 characters unique id
-        private string makeUniqueId()
+        private string MakeUniqueId()
         {
             Random random = new Random();
             string characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -265,24 +272,32 @@ namespace FlightControlWeb.Models
             List<Flight> flights = new List<Flight>();
             dynamic response = await MakeRequest(server.ServerURL +
                 "/Flights?relative_to=" + relativeTo);
+            
             if (response == null)
             {
                 return flights;
             }
+            string responseStr = response.ToString();
+            //doesn't have any flights
+            if (!responseStr.Contains("flight_id"))
+            {
+                return flights;
+            }
+
             foreach (var item in response)
             {
                 Flight newFlight = MakeFlightFromJson(item);
                 flights.Add(newFlight);
                 if (!idFromServers.ContainsKey(newFlight.FlightId))
                 {
-                    idFromServers.TryAdd(newFlight.FlightId, server);
+                    idFromServers.TryAdd(newFlight.FlightId, server.ServerId);
                 }
             }
             return flights;
         }
 
 
-        public Flight MakeFlightFromJson(JToken flight)
+        private Flight MakeFlightFromJson(JToken flight)
         {
             int passengers = (int)flight["passengers"];
             string flightId = (string)flight["flight_id"];
@@ -295,7 +310,7 @@ namespace FlightControlWeb.Models
             return new Flight(flightId, longitude, latitude, passengers, companyName, dateTime, isExternal);
         }
 
-        public FlightPlan MakeFlightPlanFromJson(JToken flightPlan)
+        private FlightPlan MakeFlightPlanFromJson(JToken flightPlan)
         {
             int passengers = (int)flightPlan["passengers"];
             string companyName = (string)flightPlan["company_name"];
@@ -317,7 +332,7 @@ namespace FlightControlWeb.Models
             return new FlightPlan(passengers,companyName,location,segments);
         }
 
-        public static async Task<dynamic> MakeRequest(string url)
+        private static async Task<dynamic> MakeRequest(string url)
         {
             using var client = new HttpClient();
             var result = await client.GetStringAsync(url);

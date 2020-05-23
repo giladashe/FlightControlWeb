@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -28,7 +29,11 @@ namespace FlightControlWeb
         {
             services.AddControllers();
             //services.AddMemoryCache();
+            services.AddSingleton<ConcurrentDictionary<string, FlightPlan>>();
+            services.AddSingleton<ConcurrentDictionary<string, Server>>();
+            services.AddSingleton<ConcurrentDictionary<string, string>>();
             services.AddSingleton<IFlightsManager, FlightsManager>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
