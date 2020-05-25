@@ -1,27 +1,29 @@
-﻿using Microsoft.CodeAnalysis;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace FlightControlWeb.Models
 {
     public class FlightsManager : IFlightsManager
     {
-        private static ConcurrentDictionary<string, FlightPlan> flightPlans =
-            new ConcurrentDictionary<string, FlightPlan>();
-        private static ConcurrentDictionary<string, Server> servers =
-            new ConcurrentDictionary<string, Server>();
-        private static ConcurrentDictionary<string, Server> idFromServers =
-            new ConcurrentDictionary<string, Server>();
+        private static ConcurrentDictionary<string, FlightPlan> flightPlans;
+        private static ConcurrentDictionary<string, Server> servers;
+        //maps from flight plan id to server id
+        private static ConcurrentDictionary<string, string> idFromServers;
+
+        public FlightsManager(ConcurrentDictionary<string, FlightPlan> flightPlanDict,
+            ConcurrentDictionary<string, Server> serversDict,
+            ConcurrentDictionary<string, string> idFromServersDict)
+        {
+            flightPlans = flightPlanDict;
+            servers = serversDict;
+            idFromServers = idFromServersDict;
+        }
 
 
         public async Task<FlightPlan> GetFlightPlan(string key)
@@ -31,17 +33,23 @@ namespace FlightControlWeb.Models
             {
                 plan = flightPlans[key];
             }
-            else if(idFromServers.ContainsKey(key))
+            else if (idFromServers.ContainsKey(key))
             {
-                Server server = idFromServers[key];
-                plan = await GetFlightPlanFromServer(key,server);
+                Server server = servers[idFromServers[key]];
+                plan = await GetFlightPlanFromServer(key, server);
             }
             return plan;
         }
 
         public string InsertFlightPlan(FlightPlan flightPlan)
         {
-            string flightId = makeUniqueId();
+            if (flightPlan.CompanyName == null || flightPlan.Location == null || flightPlan.Location.DateTime == null || flightPlan.Segments == null)
+            {
+                throw new Exception("Not valid flight plan");
+            }
+            // TODO sd
+           // DateTime.Parse(flightPlan.Location.DateTime);
+            string flightId = MakeUniqueId();
             if (!flightPlans.ContainsKey(flightId))
             {
                 flightPlans[flightId] = flightPlan;
@@ -55,7 +63,7 @@ namespace FlightControlWeb.Models
         }
 
         // makes 8 characters unique id
-        private string makeUniqueId()
+        private string MakeUniqueId()
         {
             Random random = new Random();
             string characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -78,9 +86,9 @@ namespace FlightControlWeb.Models
             {
                 return "not inside";
             }
-            FlightPlan fp = new FlightPlan();
+            FlightPlan plan = new FlightPlan();
 
-            bool removed = flightPlans.Remove(id, out fp);
+            bool removed = flightPlans.Remove(id, out plan);
             if (removed)
             {
                 return "success";
@@ -92,11 +100,10 @@ namespace FlightControlWeb.Models
         }
 
 
-        public async Task<List<Flight>> GetAllFlights(string dateTime, bool isExternal)
+        public async Task<IEnumerable<Flight>> GetAllFlights(string dateTime, bool isExternal)
         {
 
             List<Flight> currentFlights = new List<Flight>();
-
             // get flights from server if is external
             if (isExternal)
             {
@@ -236,8 +243,9 @@ namespace FlightControlWeb.Models
             {
                 DateParseHandling = DateParseHandling.None
             };
+
             dynamic response = await MakeRequest(server.ServerURL +
-                "/FlightPlan/" + planId);
+                "/api/FlightPlan/" + planId);
             if (response != null)
             {
                 flightPlan = MakeFlightPlanFromJson(response);
@@ -264,26 +272,38 @@ namespace FlightControlWeb.Models
             };
             List<Flight> flights = new List<Flight>();
             dynamic response = await MakeRequest(server.ServerURL +
-                "/Flights?relative_to=" + relativeTo);
+                "/api/Flights?relative_to=" + relativeTo);
+
             if (response == null)
             {
                 return flights;
             }
+            string responseStr = response.ToString();
+            //doesn't have any flights
+            if (!responseStr.Contains("flight_id"))
+            {
+                return flights;
+            }
+
             foreach (var item in response)
             {
                 Flight newFlight = MakeFlightFromJson(item);
                 flights.Add(newFlight);
                 if (!idFromServers.ContainsKey(newFlight.FlightId))
                 {
-                    idFromServers.TryAdd(newFlight.FlightId, server);
+                    idFromServers.TryAdd(newFlight.FlightId, server.ServerId);
                 }
             }
             return flights;
         }
 
 
-        public Flight MakeFlightFromJson(JToken flight)
+        private Flight MakeFlightFromJson(JToken flight)
         {
+            if(flight == null)
+            {
+                throw new Exception("Recieved invalid flight\n");
+            }
             int passengers = (int)flight["passengers"];
             string flightId = (string)flight["flight_id"];
             double longitude = (double)flight["longitude"];
@@ -291,17 +311,21 @@ namespace FlightControlWeb.Models
             string companyName = (string)flight["company_name"];
             string dateTime = (string)flight["date_time"];
             bool isExternal = (bool)flight["is_external"];
+            // if it's not a valid date and time throws exception
+            DateTime.Parse(dateTime);
 
             return new Flight(flightId, longitude, latitude, passengers, companyName, dateTime, isExternal);
         }
 
-        public FlightPlan MakeFlightPlanFromJson(JToken flightPlan)
+        private FlightPlan MakeFlightPlanFromJson(JToken flightPlan)
         {
             int passengers = (int)flightPlan["passengers"];
             string companyName = (string)flightPlan["company_name"];
             double longitude = (double)flightPlan["initial_location"]["longitude"];
             double latitude = (double)flightPlan["initial_location"]["latitude"];
             string dateTime = (string)flightPlan["initial_location"]["date_time"];
+            // if it's not a valid date and time throws exception
+            DateTime.Parse(dateTime);
             InitialLocation location = new InitialLocation(longitude, latitude, dateTime);
             JArray jsonSegments = (JArray)flightPlan["segments"];
             List<Segment> segments = new List<Segment>();
@@ -314,16 +338,15 @@ namespace FlightControlWeb.Models
                 segments.Add(newSegment);
             }
 
-            return new FlightPlan(passengers,companyName,location,segments);
+            return new FlightPlan(passengers, companyName, location, segments);
         }
 
-        public static async Task<dynamic> MakeRequest(string url)
+        private async Task<dynamic> MakeRequest(string url)
         {
             using var client = new HttpClient();
             var result = await client.GetStringAsync(url);
             dynamic json = JsonConvert.DeserializeObject(result);
             return json;
         }
-
     }
 }
