@@ -4,7 +4,7 @@
   "initial_location": {
     "longitude": 20.0,
     "latitude": 30.2,
-    "date_time": "2020-11-27T01:56:21Z"
+    "date_time": "2020-05-25T20:05:21Z"
   },
   "segments": [
     {
@@ -16,50 +16,6 @@
       "longitude": 63.23,
       "latitude": 46,
       "timespan_seconds": 850
-    }
-  ]
-}
-
-  {
-    "passengers": 120,
-    "company_name": "BritishAirlines",
-    "initial_location": {
-      "longitude": 25.0,
-      "latitude": 35.2,
-      "date_time": "2020-11-27T01:56:21Z"
-    },
-    "segments": [
-      {
-        "longitude": 33.22,
-        "latitude": 31.60,
-        "timespan_seconds": 750
-      },
-      {
-        "longitude": 37.23,
-        "latitude": 35.56,
-        "timespan_seconds": 800
-      }
-    ]
-  }
-
-{
-  "passengers": 100,
-  "company_name": "El-al",
-  "initial_location": {
-    "longitude": 15.0,
-    "latitude": 30.2,
-    "date_time": "2020-11-27T01:56:21Z"
-  },
-  "segments": [
-    {
-      "longitude": 30.23,
-      "latitude": 41.56,
-      "timespan_seconds": 850
-    },
-    {
-      "longitude": 40.23,
-      "latitude": 50.56,
-      "timespan_seconds": 800
     }
   ]
 }
