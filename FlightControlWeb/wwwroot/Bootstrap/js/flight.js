@@ -1,30 +1,67 @@
-﻿//setInterval(getFlights(), 2000);
+﻿//setInterval(test(), 100);
 getFlights();
 
-function getFlights() { 
+var markers = new Array();
 
+function removeMarkers() {
+    markers.forEach(function (marker) {
+        marker.setMap(null);
+    });
+    while (markers.length > 0) {
+        markers.pop();
+    }
+}
+
+var intervalId;
+$(document).ready(function () {
+    intervalId = setInterval(function () {
+        movePlanes();
+    }, 2000);
+});
+
+//At some other point
+clearInterval(intervalId);
+
+
+function movePlanes() {
     let currentTime = new Date().toISOString().substr(0, 19);
     let timeFormat = currentTime + 'Z';
-    //let ask = "/api/Flights?relative_to=" + timeFormat + "&sync_all";  
-    let ask = "/api/Flights?relative_to=2020-11-27T01:56:21Z&sync_all";
+    //! ! ! ! ! ! ! ! ! todo: after Gilad's update, remove '/api' ! ! ! ! ! ! ! ! !
+    let ask = "/api/Flights?relative_to=" + timeFormat + "&sync_all";
     $.getJSON(ask, function (data) {
+        removeMarkers();
         data.forEach(function (flight) {
-            //let flightID = flight.flight_id;
-            if (!flight.is_external) {
-                $("#internalFlightsBody").append("<tr onclick='showFlight(this)' ><td>" + flight.flight_id
-                    + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td>"
-                    + "<td><a href='#'><i class= 'fa fa-trash'></i ></a>" + "</td></tr>");
-            } else {
-                $("#externalFlightsBody").append("<tr onclick='showFlight(this)'><td>" + flight.flight_id
-                    + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td></tr>");
-            }
             showPlaneIcon(flight.latitude, flight.longitude);
         })
     });
 }
 
+function getFlights() {
+
+    let currentTime = new Date().toISOString().substr(0, 19);
+    let timeFormat = currentTime + 'Z';
+    let ask = "/api/Flights?relative_to=" + timeFormat + "&sync_all";
+    //let ask = "/api/Flights?relative_to=2020-11-27T01:56:21Z&sync_all";
+    $.getJSON(ask, function (data) {
+        $("#internalFlightsBody").empty();
+        //removeMarkers();
+        data.forEach(function (flight) {
+            //let flightID = flight.flight_id;
+            if (!flight.is_external) {
+                $("#internalFlightsBody").append("<tr onclick='showFlight(this)' ><td>" + flight.flight_id
+                    + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td>"
+                    + "<td><a href='#'><i class='fa fa-trash' onclick='deleteFlight(\"" + flight.flight_id + "\")'></i ></a>" + "</td></tr>");
+            } else {
+                $("#externalFlightsBody").append("<tr onclick='showFlight(this)'><td>" + flight.flight_id
+                    + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td></tr>");
+            }
+            //showPlaneIcon(flight.latitude, flight.longitude);
+        })
+    });
+}
+
 function showPlaneIcon(lat, lon) {
-    
+
     //let iconBase = "https://maps.google.com/mapfiles/kml/shapes/";
     //let iconPlane = '\Bootstrap\js\aircraft.png';
     let position = new google.maps.LatLng(lat, lon);
@@ -33,11 +70,13 @@ function showPlaneIcon(lat, lon) {
         map: map,
         icon: 'Bootstrap/js/plane.png'
     });
+    markers.push(marker);
 }
 
 //<a href='#'><i class= 'fas fa-trash-alt delete_icon'></i ></a> 
 function showFlight() {
     // remove green background of "table-success" from all internalFlights table and add it only to the selected row 
+
     $("#internalFlights tr").removeClass('table-success');
     let row = event.target.parentNode;
     row.classList.add('table-success');
@@ -73,4 +112,75 @@ function showFlight() {
     }
 }
 
+var drop = $('#dropZone');
+drop.on('dragover', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+});
 
+drop.on('dragenter', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    //$('#dropZone *').css("pointer-events", "none");
+    //$('#dropZone').css({
+    //    "background": "rgba(0,153,255,1)",
+    //});
+    //$('#internalFlights').hide();
+    //$('.drag-text').removeClass('d-none');    
+}).on('dragleave dragend mouseout', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    //$('#dropZone').css({
+    //    "background": "transparent"
+    //});
+    //$('#internalFlights').show();
+    //$('.drag-text').addClass('d-none');
+});
+
+// Get file data on drop
+drop.on('drop', function (e) {
+
+    //dropZone.classList.remove("dragover");
+    e.stopPropagation();
+    e.preventDefault();
+    var files = e.originalEvent.dataTransfer.files; // Array of all files
+    if (files.length === 1 && files[0].type.includes('/json')) {
+        var reader = new FileReader();
+
+        reader.onload = function (e2) {
+            // finished reading file data.
+            let flightJson = atob(e2.target.result.replace('data:application/json;base64,', ''));
+
+            // /api/FlightPlan
+            $.ajax({
+                url: '/api/FlightPlan',
+                contentType: "application/json",
+                type: "POST",
+                data: flightJson
+            })
+                .done(function () {
+                    location.reload();
+                })
+                .fail(function (res) {
+                    alert("Error" + res);
+                });
+        }
+
+        reader.readAsDataURL(files[0]); // start reading the file data.
+    } else {
+        alert("Accept Only 1 Json File");
+    }
+});
+
+function deleteFlight(id) {
+    // /api/FlightPlan
+    $.ajax({
+        url: '/api/Flights/' + id,
+        contentType: "text/plain; charset=utf-8",
+        type: "DELETE",
+    }).done(function () {
+        getFlights();
+    }).fail(function (res) {
+        alert("Error" + res);
+    });
+}

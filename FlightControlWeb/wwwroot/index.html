@@ -62,12 +62,24 @@
             color: black;
         }
 
+        #internalFlights{
+
+        }
+
+        table {
+            overflow-y: scroll;
+            height: 400px;
+            display: block;
+            padding: 15px;
+            background-color: #dbd8c7;
+        }
+
         table, th, td {
             padding: 15px;
             background-color: #dbd8c7;
         }
 
-        #flightDetails {
+        /*#flightDetails {
             position: absolute;
             left: 8px;
             top: 450px;
@@ -77,14 +89,36 @@
             position: absolute;
             left: 245px;
             top: 400px;
+        }*/
+
+        #dropZone {
+            min-height:500px;
         }
 
-        #externalFlights {
-            width: 500px;
+        .internalFlights {
+            min-height: 500px;
         }
+
+        /*#dropZone * {
+            pointer-events: none;
+        }*/
+
+        .drag-text {
+            height: 500px;
+            color:white;
+            position: relative;
+        }
+
+        .drag-text h2 {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
     </style>
 
-
+    
 
 </head>
 <body>
@@ -102,10 +136,10 @@
                             center: coordinates
                         });
                     }
-                    
+
                 </script>
                 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAx7LLopSO76G5tucyaoefZKVc3TkAypv4&callback=initMap"></script>
-                <h3 id="flightDetailsHeading">
+                <h3 id="flightDetailsHeading" class="mt-5">
                     Flight details
                 </h3>
                 <table class="table" id="flightDetails">
@@ -129,55 +163,66 @@
                     </tbody>
                 </table>
             </div>
-            <div class="col-md-5">
-                <h2>
-                    Internal flights
-                </h2>
-                <table class="table" id="internalFlights">
-                    <thead id="internalFlightsHead">
-                        <tr>
-                            <th>
-                                Flight ID
-                            </th>
-                            <th>
-                                Company
-                            </th>
-                            <th>
-                                Date time
-                            </th>
-                            <th>
-                                Remove
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody id="internalFlightsBody">
-                    </tbody>
-                </table>
-                <h3 id="externalFlightsHeading">
-                    External flights
-                </h3>
-                <table id="externalFlights">
-                    <thead id="externalFlightsHead">
-                        <tr>
-                            <th>
-                                Flight ID
-                            </th>
-                            <th>
-                                Company
-                            </th>
-                            <th>
-                                Date time
-                            </th>
-                            <th>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody id="externalFlightsBody">
-                    </tbody>
-                </table>
+            <div class="col-md-6">
+
+                <div id="dropZone" class="internalFlights drop_zone">
+                    <h2>
+                        Internal flights
+                    </h2>
+
+                    <div class="drag-text d-none">
+                        <h2>Drag Over Here</h2>
+                    </div>
+
+                    <table class="table" id="internalFlights">
+                        <thead id="internalFlightsHead">
+                            <tr>
+                                <th>
+                                    Flight ID
+                                </th>
+                                <th>
+                                    Company
+                                </th>
+                                <th>
+                                    Date time
+                                </th>
+                                <th>
+                                    Remove
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="internalFlightsBody">
+                        </tbody>
+                    </table>                    
+                </div>
+                <div class="externalFlights">
+                    <h3 id="externalFlightsHeading">
+                        External flights
+                    </h3>
+                    <table id="externalFlights">
+                        <thead id="externalFlightsHead">
+                            <tr>
+                                <th>
+                                    Flight ID
+                                </th>
+                                <th>
+                                    Company
+                                </th>
+                                <th>
+                                    Date time
+                                </th>
+                                <th>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="externalFlightsBody">
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
+
     <script src="Bootstrap/js/flight.js"></script>
 </body>
-</html>
+    </html>
