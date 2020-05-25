@@ -34,7 +34,11 @@ namespace FlightControlWeb.Controllers
             {
                 return BadRequest("problem in request to servers");
             }
-            catch(Exception e)
+            catch (FormatException)
+            {
+                return BadRequest("Date and time not in format");
+            }
+            catch (Exception e)
             {
                 return BadRequest(e.Message);
             }

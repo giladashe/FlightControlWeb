@@ -12,18 +12,20 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web.Http;
+using System.Web.Http.Results;
 
 namespace FlightControlTests
 {
     [TestClass]
-    public class UnitTest1
+    public class FlightsControllerTest
     {
         [TestMethod]
         public async Task GetFlightsMultipleServers()
         {
             var managermock = new Mock<IFlightsManager>();
-            managermock.Setup(x => x.GetAllFlights(It.IsAny<string>(), It.IsAny<bool>())).Returns(
-                GetTestFlights());
+            managermock.Setup(x => x.GetAllFlights(It.IsAny<string>(), It.IsAny<bool>())).Throws(
+                new HttpRequestException());
             var myContext = new Mock<HttpContext>();
             myContext.SetupGet(x => x.Request.QueryString).Returns(new QueryString
                         ("?relative_to=2020-11-27T01:56:22Z"));
@@ -36,15 +38,24 @@ namespace FlightControlTests
                 ControllerContext = controllerContext,
             };
             IEnumerable<Flight> flights = await GetTestFlights();
-           /* IEnumerable<Flight> flights1 = await controller.GetAllFlights("?relative_to=2020-11-27T01:56:22Z");*/
-           /* Assert.AreEqual(flights.Count(), flights1.Count());
-            IEnumerator<Flight> e1 = flights.GetEnumerator();
-            IEnumerator<Flight> e2 = flights1.GetEnumerator();
-            while (e1.MoveNext() && e2.MoveNext())
-            {
-                Assert.AreEqual(e1.Current, e2.Current);
-            }
-            Assert.AreEqual(flights, flights1);*/
+            
+
+            var response = controller.GetAllFlights("asdfd");
+
+
+            // check if he handles HttpRequestException
+
+
+
+            /* IEnumerable<Flight> flights1 = await controller.GetAllFlights("?relative_to=2020-11-27T01:56:22Z");*/
+            /* Assert.AreEqual(flights.Count(), flights1.Count());
+             IEnumerator<Flight> e1 = flights.GetEnumerator();
+             IEnumerator<Flight> e2 = flights1.GetEnumerator();
+             while (e1.MoveNext() && e2.MoveNext())
+             {
+                 Assert.AreEqual(e1.Current, e2.Current);
+             }
+             Assert.AreEqual(flights, flights1);*/
 
         }
 
@@ -66,6 +77,9 @@ namespace FlightControlTests
             flights.Add(new Flight("wow", false, plan1));
             return Task.Run(() => flights.AsEnumerable());
         }
+
+
+        // checks if handles FormatException
     }
 }
 

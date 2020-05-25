@@ -43,6 +43,12 @@ namespace FlightControlWeb.Models
 
         public string InsertFlightPlan(FlightPlan flightPlan)
         {
+            if (flightPlan.CompanyName == null || flightPlan.Location == null || flightPlan.Location.DateTime == null || flightPlan.Segments == null)
+            {
+                throw new Exception("Not valid flight plan");
+            }
+            // TODO sd
+           // DateTime.Parse(flightPlan.Location.DateTime);
             string flightId = MakeUniqueId();
             if (!flightPlans.ContainsKey(flightId))
             {
@@ -294,6 +300,10 @@ namespace FlightControlWeb.Models
 
         private Flight MakeFlightFromJson(JToken flight)
         {
+            if(flight == null)
+            {
+                throw new Exception("Recieved invalid flight\n");
+            }
             int passengers = (int)flight["passengers"];
             string flightId = (string)flight["flight_id"];
             double longitude = (double)flight["longitude"];
@@ -301,6 +311,8 @@ namespace FlightControlWeb.Models
             string companyName = (string)flight["company_name"];
             string dateTime = (string)flight["date_time"];
             bool isExternal = (bool)flight["is_external"];
+            // if it's not a valid date and time throws exception
+            DateTime.Parse(dateTime);
 
             return new Flight(flightId, longitude, latitude, passengers, companyName, dateTime, isExternal);
         }
@@ -312,6 +324,8 @@ namespace FlightControlWeb.Models
             double longitude = (double)flightPlan["initial_location"]["longitude"];
             double latitude = (double)flightPlan["initial_location"]["latitude"];
             string dateTime = (string)flightPlan["initial_location"]["date_time"];
+            // if it's not a valid date and time throws exception
+            DateTime.Parse(dateTime);
             InitialLocation location = new InitialLocation(longitude, latitude, dateTime);
             JArray jsonSegments = (JArray)flightPlan["segments"];
             List<Segment> segments = new List<Segment>();
@@ -327,7 +341,7 @@ namespace FlightControlWeb.Models
             return new FlightPlan(passengers, companyName, location, segments);
         }
 
-        private static async Task<dynamic> MakeRequest(string url)
+        private async Task<dynamic> MakeRequest(string url)
         {
             using var client = new HttpClient();
             var result = await client.GetStringAsync(url);

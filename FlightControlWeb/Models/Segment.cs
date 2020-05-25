@@ -30,17 +30,5 @@ namespace FlightControlWeb.Models
         {
         }
 
-        /*public Segment(double longitude,double latitude,double timeSpanSeconds)
-        {
-            TargetLocation = new Location(longitude, latitude);
-            TimeSpanSeconds = timeSpanSeconds;
-        }
-
-        public Segment(Location targetLocation, double timeSpanSeconds)
-        {
-            TargetLocation = targetLocation;
-            TimeSpanSeconds = timeSpanSeconds;
-        }*/
-
     }
 }

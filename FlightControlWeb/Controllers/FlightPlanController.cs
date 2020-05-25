@@ -29,7 +29,7 @@ namespace FlightControlWeb.Controllers
             }
             catch (HttpRequestException)
             {
-                return BadRequest("Problem with http request to other servers\n");
+                return BadRequest("Problem with http request to other servers");
             }
             catch (Exception e)
             {
@@ -46,15 +46,26 @@ namespace FlightControlWeb.Controllers
         [HttpPost]
         public ActionResult<string> AddFlightPlan([FromBody] FlightPlan plan)
         {
-            string answer = manager.InsertFlightPlan(plan);
-            if (answer != null)
+            try
             {
-                return Ok("success");
+                string answer = manager.InsertFlightPlan(plan);
+                if (answer != null)
+                {
+                    return Ok("Success");
+                }
+                else
+                {
+                    // had id in the dictionary already
+                    return BadRequest("Had id in the dictionary already");
+                }
             }
-            else
+            catch (FormatException)
             {
-                // had id in the dictionary already
-                return BadRequest();
+                return BadRequest("Date and time not in format");
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
             }
 
         }
