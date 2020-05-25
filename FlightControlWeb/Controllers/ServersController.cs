@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using FlightControlWeb.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlightControlWeb.Controllers
@@ -22,24 +20,46 @@ namespace FlightControlWeb.Controllers
 
         // GET: api/Servers
         [HttpGet]
-        public IEnumerable<Server> GetAllServers()
+        public ActionResult<IEnumerable<Server>> GetAllServers()
         {
-            return manager.GetAllServers();
+            IEnumerable<Server> servers = manager.GetAllServers();
+            if (servers.Any())
+            {
+                return Ok(servers);
+            }
+            return NotFound();
         }
 
         // POST: api/Servers
         [HttpPost]
-        public void InsertNewServer([FromBody] Server server)
+        public ActionResult<string> InsertNewServer([FromBody] Server server)
         {
+            string url = server.ServerURL;
+            if (url.EndsWith('/'))
+            {
+                server.ServerURL = url.Remove(url.Length-1);
+            }
             string response = manager.InsertServer(server);
+            if(response == "success")
+            {
+                return Ok(response);
+            }
+            // already inside
+            return BadRequest(response);
         }
 
 
         // DELETE: api/ApiWithActions/5
         [HttpDelete("{id}")]
-        public void DeleteServer(string id)
+        public ActionResult<string> DeleteServer(string id)
         {
             string response = manager.DeleteServer(id);
+            if (response == "success")
+            {
+                return Ok(response);
+            }
+            // not inside
+            return BadRequest(response);
         }
     }
 }
