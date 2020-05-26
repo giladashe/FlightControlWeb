@@ -40,12 +40,13 @@ namespace FlightControlTests
             ActionResult<IEnumerable<Flight>> response = await controller.GetAllFlights("asdfd");
 
 
-            // Assert
+            // Assert check if he handles HttpRequestException
 
             BadRequestObjectResult action = Assert.IsType<BadRequestObjectResult>(response.Result);
             string message = Assert.IsAssignableFrom<string>(action.Value);
             Assert.Equal("problem in request to servers", message);
         }
+
         [Fact]
         public async Task GetAllFlightsGetFormatExceptionShouldReturnBadRequest()
         {
@@ -81,9 +82,9 @@ namespace FlightControlTests
         {
 
             // Arrange
-            IEnumerable<Flight> flights = await GetTestFlights();
+            IEnumerable<Flight> flightsExpected = await GetTestFlights();
             this.managermock.Setup(x => x.GetAllFlights(It.IsAny<string>(), It.IsAny<bool>())).Returns(
-                Task.Run(() => flights.AsEnumerable()));
+                Task.Run(() => flightsExpected.AsEnumerable()));
             this.myContext.SetupGet(x => x.Request.QueryString).Returns(new QueryString
                         ("?relative_to=2020-11-27T01:56:22Z"));
             ControllerContext controllerContext = new ControllerContext()
@@ -102,15 +103,15 @@ namespace FlightControlTests
                 await controller.GetAllFlights("?relative_to=2020-11-27T01:56:22Z");
 
 
-            // Assert check if he handles HttpRequestException
+            // Assert
 
             var action = Assert.IsType<OkObjectResult>(response.Result);
             OkObjectResult result = (OkObjectResult)response.Result;
-            IEnumerable<Flight> flights1 = (IEnumerable<Flight>)result.Value;
+            IEnumerable<Flight> flightsResult = (IEnumerable<Flight>)result.Value;
             //checks if the flights expected count equals to result
-            Assert.Equal(flights.Count(), flights1.Count());
-            IEnumerator<Flight> e1 = flights.GetEnumerator();
-            IEnumerator<Flight> e2 = flights1.GetEnumerator();
+            Assert.Equal(flightsExpected.Count(), flightsResult.Count());
+            IEnumerator<Flight> e1 = flightsExpected.GetEnumerator();
+            IEnumerator<Flight> e2 = flightsResult.GetEnumerator();
             //cheks if all the flights are identical
             while (e1.MoveNext() && e2.MoveNext())
             {
