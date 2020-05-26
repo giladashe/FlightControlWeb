@@ -21,6 +21,7 @@ var intervalId;
 $(document).ready(function () {
     intervalId = setInterval(function () {
         movePlanes();
+        getFlights();
     }, 2000);
 });
 
@@ -31,7 +32,6 @@ clearInterval(intervalId);
 function movePlanes() {
     let currentTime = new Date().toISOString().substr(0, 19);
     let timeFormat = currentTime + 'Z';
-    //! ! ! ! ! ! ! ! ! todo: after Gilad's update, remove '/api' ! ! ! ! ! ! ! ! !
     let ask = "/api/Flights?relative_to=" + timeFormat + "&sync_all";
     $.getJSON(ask, function (data) {
         removeMarkers();
@@ -46,26 +46,33 @@ function getFlights() {
     let currentTime = new Date().toISOString().substr(0, 19);
     let timeFormat = currentTime + 'Z';
     let ask = "/api/Flights?relative_to=" + timeFormat + "&sync_all";
-    //let ask = "/api/Flights?relative_to=2020-11-27T01:56:21Z&sync_all";
     $.getJSON(ask, function (data) {
-        $("#internalFlightsBody").empty();
-        //removeMarkers();
         data.forEach(function (flight) {
-            //let flightID = flight.flight_id;
-            if (!flight.is_external) {
-                var row = "<tr id=" + flight.flight_id + " onclick=showFlight('" + flight.flight_id + "') ><td>" + flight.flight_id
-                    + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td>"
-                    + "<td><a href='#'><i class='fa fa-trash' onclick=deleteFlight(\"" + flight.flight_id + "\")></i ></a>" + "</td></tr>";
-                $("#internalFlightsBody").append(row);
-                //row.attr('id', flight.flight_id);
-            } else {
-                $("#externalFlightsBody").append("<tr onclick=showFlight('" + flight.flight_id + "')><td>" + flight.flight_id
-                    + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td></tr>");
+            if (document.getElementById(flight.flight_id) === null) {
+                if (!flight.is_external) {
+                    var row = "<tr id=" + flight.flight_id + " onclick=showFlight('" + flight.flight_id + "') ><td>" + flight.flight_id
+                        + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td>"
+                        + "<td><a href='#'><i class='fa fa-trash' onclick=deleteFlight(\"" + flight.flight_id + "\")></i ></a>" + "</td></tr>";
+                    $("#internalFlightsBody").append(row);
+                } else {
+                    $("#externalFlightsBody").append("<tr onclick=showFlight('" + flight.flight_id + "')><td>" + flight.flight_id
+                        + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td></tr>");
+                }
             }
-            //showPlaneIcon(flight.latitude, flight.longitude);
         })
     });
 }
+
+function isExist(flight_id) {
+    //let exist = $("#internalFlights tr")
+    let id = '#' + flight_id;
+    //alert(id);
+    if ($(id).length) {
+        return true;
+    }
+    return false;
+}
+
 
 function showPlaneIcon(lat, lon, flightID) {
 
@@ -98,8 +105,9 @@ function showPlaneIcon(lat, lon, flightID) {
 
 //<a href='#'><i class= 'fas fa-trash-alt delete_icon'></i ></a> 
 function showFlight(flightID) {
-    // remove green background of "table-success" from all internalFlights table and add it only to the selected row 
 
+
+    // remove green background of "table-success" from all internalFlights table and add it only to the selected row
     $("#internalFlights tr").removeClass('table-success');
     //let row = event.target.parentNode;
     $('#' + flightID).addClass('table-success');
