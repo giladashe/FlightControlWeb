@@ -1,7 +1,11 @@
-﻿//setInterval(test(), 100);
-getFlights();
+﻿
 
+//variables
 var markers = new Array();
+var flightPath = { flightId: null, polyLine: null }
+
+//at beggining, get all flights
+getFlights();
 
 function removeMarkers() {
     markers.forEach(function (marker) {
@@ -11,6 +15,7 @@ function removeMarkers() {
         markers.pop();
     }
 }
+
 
 var intervalId;
 $(document).ready(function () {
@@ -31,7 +36,7 @@ function movePlanes() {
     $.getJSON(ask, function (data) {
         removeMarkers();
         data.forEach(function (flight) {
-            showPlaneIcon(flight.latitude, flight.longitude);
+            showPlaneIcon(flight.latitude, flight.longitude, flight.flight_id);
         })
     });
 }
@@ -41,75 +46,94 @@ function getFlights() {
     let currentTime = new Date().toISOString().substr(0, 19);
     let timeFormat = currentTime + 'Z';
     let ask = "/api/Flights?relative_to=" + timeFormat + "&sync_all";
-    //let ask = "/api/Flights?relative_to=2020-11-27T01:56:21Z&sync_all";
     $.getJSON(ask, function (data) {
         $("#internalFlightsBody").empty();
-        //removeMarkers();
         data.forEach(function (flight) {
-            //let flightID = flight.flight_id;
             if (!flight.is_external) {
-                $("#internalFlightsBody").append("<tr onclick='showFlight(this)' ><td>" + flight.flight_id
+                var row = "<tr id=" + flight.flight_id + " onclick=showFlight('" + flight.flight_id + "') ><td>" + flight.flight_id
                     + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td>"
-                    + "<td><a href='#'><i class='fa fa-trash' onclick='deleteFlight(\"" + flight.flight_id + "\")'></i ></a>" + "</td></tr>");
+                    + "<td><a href='#'><i class='fa fa-trash' onclick=deleteFlight(\"" + flight.flight_id + "\")></i ></a>" + "</td></tr>";
+                $("#internalFlightsBody").append(row);
+                //row.attr('id', flight.flight_id);
             } else {
-                $("#externalFlightsBody").append("<tr onclick='showFlight(this)'><td>" + flight.flight_id
+                $("#externalFlightsBody").append("<tr onclick=showFlight('" + flight.flight_id + "')><td>" + flight.flight_id
                     + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td></tr>");
             }
-            //showPlaneIcon(flight.latitude, flight.longitude);
         })
     });
 }
 
-function showPlaneIcon(lat, lon) {
+function showPlaneIcon(lat, lon, flightID) {
 
     //let iconBase = "https://maps.google.com/mapfiles/kml/shapes/";
-    //let iconPlane = '\Bootstrap\js\aircraft.png';
+    //let iconPlane = '\Bootstrap\js\aircraft.png';  
     let position = new google.maps.LatLng(lat, lon);
     let marker = new google.maps.Marker({
-        position: position,
         map: map,
+        position: position,
         icon: 'Bootstrap/js/plane.png'
     });
+    marker.addListener('click', function () {
+        map.setCenter(marker.getPosition());
+        smoothZoom(map, 8, map.getZoom());
+        showFlight(flightID);
+
+        //
+
+
+        //let flightPlanAsk = "/api/FlightPlan/" + flightID;
+        //$.getJSON(flightPlanAsk, function (flightPlan) {
+        //    paintFlightPath(flightPlan, flightID);
+        //});
+
+    })
     markers.push(marker);
 }
 
-//<a href='#'><i class= 'fas fa-trash-alt delete_icon'></i ></a> 
-function showFlight() {
+
+
+function showFlight(flightID) {
     // remove green background of "table-success" from all internalFlights table and add it only to the selected row 
 
     $("#internalFlights tr").removeClass('table-success');
-    let row = event.target.parentNode;
-    row.classList.add('table-success');
+    //let row = event.target.parentNode;
+    $('#' + flightID).addClass('table-success');
 
     // remove table flightPlanBody so the flight appear only once  
     $("#flightDetailsBody tr").empty();
 
     // fill flightPlan table 
-    let flightID = row.children[0].innerText;
+    //let flightID = row.children[0].innerText;
     let flightPlanAsk = "/api/FlightPlan/" + flightID;
     $.getJSON(flightPlanAsk, function (flightPlan) {
-        // paint flight lines on map 
-        paintFlightPath(flightPlan);
+        // paint flight lines on map
+        paintFlightPath(flightPlan, flightID);
         $("#flightDetailsBody").append("<tr><td>" + flightID + "</td><td>" + flightPlan.company_name + "</td><td>" +
             flightPlan.passengers + "</td><td>" + "longitude: " + flightPlan.initial_location.longitude + " &emsp;"
             + "latitude: " + flightPlan.initial_location.latitude + "</td></tr>");
     });
+}
 
-    function paintFlightPath(flightPlan) {
-        let lines = [{ lat: Number(flightPlan.initial_location.latitude), lng: Number(flightPlan.initial_location.longitude) }];
-        for (let i = 0; i < flightPlan.segments.length; i++) {
-            let line = { lat: Number(flightPlan.segments[i].latitude), lng: Number(flightPlan.segments[i].longitude) };
-            lines.push(line);
-        }
-        let flightPath = new google.maps.Polyline({
-            path: lines,
-            geodesic: true,
-            strokeColor: '#4cff00',
-            strokeOpacity: 1.0,
-            strokeWeight: 2
-        });
-        flightPath.setMap(map);
+function paintFlightPath(flightPlan, flightID) {
+    //remove previous paths from map:
+    if (flightPath.polyLine !== null) {
+        flightPath.polyLine.setMap(null);
     }
+
+    lines = [{ lat: Number(flightPlan.initial_location.latitude), lng: Number(flightPlan.initial_location.longitude) }];
+    for (let i = 0; i < flightPlan.segments.length; i++) {
+        let line = { lat: Number(flightPlan.segments[i].latitude), lng: Number(flightPlan.segments[i].longitude) };
+        lines.push(line);
+    }
+    flightPath.polyLine = new google.maps.Polyline({
+        path: lines,
+        geodesic: true,
+        strokeColor: '#4cff00',
+        strokeOpacity: 1.0,
+        strokeWeight: 2
+    });
+    flightPath.polyLine.setMap(map);
+    flightPath.flightId = flightID;
 }
 
 var drop = $('#dropZone');
@@ -174,6 +198,11 @@ drop.on('drop', function (e) {
 
 function deleteFlight(id) {
     // /api/FlightPlan
+    if (flightPath.flightId === id) {
+        flightPath.polyLine.setMap(null);
+        flightPath.flightId = null
+    }
+
     $.ajax({
         url: '/api/Flights/' + id,
         contentType: "text/plain; charset=utf-8",
@@ -184,3 +213,17 @@ function deleteFlight(id) {
         alert("Error" + res);
     });
 }
+
+// the smooth zoom function
+function smoothZoom(map, max, cnt) {
+    if (cnt >= max) {
+        return;
+    }
+    else {
+        z = google.maps.event.addListener(map, 'zoom_changed', function (event) {
+            google.maps.event.removeListener(z);
+            smoothZoom(map, max, cnt + 1);
+        });
+        setTimeout(function () { map.setZoom(cnt) }, 80); // 80ms is what I found to work well on my system -- it might not work well on all systems
+    }
+}  
