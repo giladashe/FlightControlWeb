@@ -21,7 +21,8 @@ namespace FlightControlWeb.Controllers
         // GET: api/Flights?relative_to=<DATE_TIME>
         [HttpGet]
         
-        public async Task<ActionResult<IEnumerable<Flight>>> GetAllFlights([FromQuery(Name = "relative_to")]string relativeTo)
+        public async Task<ActionResult<IEnumerable<Flight>>> GetAllFlights
+            ([FromQuery(Name = "relative_to")]string relativeTo)
         {
             string request = Request.QueryString.Value;
             bool isExternal = request.Contains("sync_all");
