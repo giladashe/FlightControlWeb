@@ -1,5 +1,4 @@
-﻿//setInterval(test(), 100);
-getFlights();
+﻿getFlights();
 
 var markers = new Array();
 
@@ -41,12 +40,9 @@ function getFlights() {
     let currentTime = new Date().toISOString().substr(0, 19);
     let timeFormat = currentTime + 'Z';
     let ask = "/api/Flights?relative_to=" + timeFormat + "&sync_all";
-    //let ask = "/api/Flights?relative_to=2020-11-27T01:56:21Z&sync_all";
     $.getJSON(ask, function (data) {
         $("#internalFlightsBody").empty();
-        //removeMarkers();
         data.forEach(function (flight) {
-            //let flightID = flight.flight_id;
             if (!flight.is_external) {
                 $("#internalFlightsBody").append("<tr onclick='showFlight(this)' ><td>" + flight.flight_id
                     + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td>"
@@ -55,15 +51,11 @@ function getFlights() {
                 $("#externalFlightsBody").append("<tr onclick='showFlight(this)'><td>" + flight.flight_id
                     + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td></tr>");
             }
-            //showPlaneIcon(flight.latitude, flight.longitude);
         })
     });
 }
 
 function showPlaneIcon(lat, lon) {
-
-    //let iconBase = "https://maps.google.com/mapfiles/kml/shapes/";
-    //let iconPlane = '\Bootstrap\js\aircraft.png';
     let position = new google.maps.LatLng(lat, lon);
     let marker = new google.maps.Marker({
         position: position,
@@ -73,7 +65,6 @@ function showPlaneIcon(lat, lon) {
     markers.push(marker);
 }
 
-//<a href='#'><i class= 'fas fa-trash-alt delete_icon'></i ></a> 
 function showFlight() {
     // remove green background of "table-success" from all internalFlights table and add it only to the selected row 
 
