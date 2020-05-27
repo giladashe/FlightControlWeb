@@ -103,7 +103,6 @@ function showPlaneIcon(lat, lon, flightID) {
 
 
 
-//<a href='#'><i class= 'fas fa-trash-alt delete_icon'></i ></a> 
 function showFlight(flightID) {
 
 

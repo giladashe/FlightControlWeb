@@ -11,7 +11,7 @@ namespace FlightControlWeb.Controllers
     [ApiController]
     public class FlightsController : ControllerBase
     {
-        private IFlightsManager manager;
+        private readonly IFlightsManager manager;
 
         public FlightsController(IFlightsManager manager)
         {

@@ -10,7 +10,7 @@ namespace FlightControlWeb.Controllers
     [ApiController]
     public class ServersController : ControllerBase
     {
-        private IFlightsManager manager;
+        private readonly IFlightsManager manager;
 
         public ServersController(IFlightsManager manager)
         {
