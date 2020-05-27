@@ -47,6 +47,10 @@ function getFlights() {
     let timeFormat = currentTime + 'Z';
     let ask = "/api/Flights?relative_to=" + timeFormat + "&sync_all";
     $.getJSON(ask, function (data) {
+        //if there is no data to update, so empty the table.
+        if (data.length === 0) {
+            $('#internalFlightsBody').empty();
+        }
         data.forEach(function (flight) {
             if (document.getElementById(flight.flight_id) === null) {
                 if (!flight.is_external) {
