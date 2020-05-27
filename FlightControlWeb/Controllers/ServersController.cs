@@ -40,7 +40,7 @@ namespace FlightControlWeb.Controllers
                 server.ServerURL = url.Remove(url.Length-1);
             }
             string response = manager.InsertServer(server);
-            if(response == "success")
+            if(response == "Success")
             {
                 return Ok(response);
             }
