@@ -26,11 +26,16 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
           integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
           crossorigin="" />
+
+    <!-- Toastr notifications -->
+    <link rel="stylesheet" href="./toastr/toastr.min.css">
+
     <!-- Make sure you put this AFTER Leaflet's CSS -->
     <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
             integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
             crossorigin="">
     </script>
+
     <title>Simple Map</title>
     <!--<meta name="viewport" content="initial-scale=1.0">-->
     <meta charset="utf-8">
@@ -62,8 +67,7 @@
             color: black;
         }
 
-        #internalFlights{
-
+        #internalFlights {
         }
 
         table {
@@ -92,7 +96,7 @@
         }*/
 
         #dropZone {
-            min-height:500px;
+            min-height: 500px;
         }
 
         .internalFlights {
@@ -105,27 +109,26 @@
 
         .drag-text {
             height: 500px;
-            color:white;
+            color: white;
             position: relative;
         }
 
-        .drag-text h2 {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
+            .drag-text h2 {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
     </style>
 
-    
+
 
 </head>
 <body>
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-6">
-                <h2>My Map</h2>
+                <h2>Flight Control</h2>
                 <div id="map"></div>
                 <script>
                     var map;
@@ -193,7 +196,7 @@
                         </thead>
                         <tbody id="internalFlightsBody">
                         </tbody>
-                    </table>                    
+                    </table>
                 </div>
                 <div class="externalFlights">
                     <h3 id="externalFlightsHeading">
@@ -222,7 +225,7 @@
             </div>
         </div>
     </div>
-
+    <script src="toastr/toastr.min.js"></script>
     <script src="Bootstrap/js/flight.js"></script>
 </body>
     </html>
