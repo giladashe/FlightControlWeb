@@ -39,6 +39,10 @@ namespace FlightControlWeb.Controllers
             {
                 return BadRequest("Date and time not in format");
             }
+            catch (TimeoutException)
+            {
+                return BadRequest("Too much time for response from server");
+            }
             catch (Exception e)
             {
                 return BadRequest(e.Message);

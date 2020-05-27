@@ -37,7 +37,8 @@ namespace FlightControlWeb.Controllers
             }
             if (plan == null)
             {
-                return NotFound();
+                return NotFound("" +
+                    "");
             }
             return Ok(plan);
         }
