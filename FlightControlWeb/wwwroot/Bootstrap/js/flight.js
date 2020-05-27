@@ -4,6 +4,17 @@
 var markers = new Array();
 var flightPath = { flightId: null, polyLine: null }
 
+
+//configurations:
+//add google map a listener for click():
+map.addListener('click', function () {
+    //when clicking on map, remove all colored paths or table marks.
+    $("#internalFlights tr").removeClass('table-success');
+    $("#flightDetailsBody tr").empty();
+    flightPath.polyLine.setMap(null);
+})
+
+
 //at beggining, get all flights
 getFlights();
 
@@ -78,6 +89,7 @@ function isExist(flight_id) {
 }
 
 
+
 function showPlaneIcon(lat, lon, flightID) {
 
     //let iconBase = "https://maps.google.com/mapfiles/kml/shapes/";
@@ -88,6 +100,7 @@ function showPlaneIcon(lat, lon, flightID) {
         position: position,
         icon: 'Bootstrap/js/plane.png'
     });
+
     marker.addListener('click', function () {
         map.setCenter(marker.getPosition());
         smoothZoom(map, 8, map.getZoom());
@@ -212,19 +225,21 @@ drop.on('drop', function (e) {
     }
 });
 
-function deleteFlight(id) {
-    // /api/FlightPlan
-    if (flightPath.flightId === id) {
-        flightPath.polyLine.setMap(null);
-        flightPath.flightId = null
-    }
-
+function deleteFlight(id) {   
     $.ajax({
         url: '/api/Flights/' + id,
         contentType: "text/plain; charset=utf-8",
         type: "DELETE",
     }).done(function () {
-        getFlights();
+        document.getElementById(id).remove();
+        if (flightPath.flightId === id) {
+            flightPath.polyLine.setMap(null);
+            flightPath.flightId = null
+        } else {
+            //Keep the row 
+            //$('#' + flightPath.flightId).addClass('table-success');
+            showFlight(flightPath.flightId);
+        }
     }).fail(function (res) {
         alert("Error" + res);
     });
