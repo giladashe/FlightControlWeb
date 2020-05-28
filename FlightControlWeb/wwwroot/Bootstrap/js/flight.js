@@ -1,4 +1,4 @@
-﻿     
+﻿
 //variables
 var markers = new Array();
 var flightPath = { flightId: null, polyLine: null }
@@ -48,9 +48,9 @@ function movePlanes() {
         data.forEach(function (flight) {
             showPlaneIcon(flight.latitude, flight.longitude, flight.flight_id);
         })
-        .fail(function (jqXHR) {
-            toastr.error(jqXHR.statusText + ' : ' + jqXHR.responseText);
-        })
+        //.fail(function (jqXHR) {
+        //    toastr.error(jqXHR.statusText + ' : ' + jqXHR.responseText);
+        //})
     });
 }
 
@@ -68,10 +68,6 @@ function getFlights() {
         }
         data.forEach(function (flight) {
             flightsIdsSet.add(flight.flight_id);
-            /*            if (flightPath.flightId !== null && flightPath.flightId === flight.flight_id) {
-                            //check if the flight which its polygon is on the map is still active.
-                            isPolygonFlighActive = true;
-                        }*/
             if (document.getElementById(flight.flight_id) === null) {
                 if (!flight.is_external) {
                     var row = "<tr id=" + flight.flight_id + " onclick=showFlight('" + flight.flight_id + "') ><td>" + flight.flight_id
@@ -79,26 +75,58 @@ function getFlights() {
                         + "<td><a href='#'><i class='fa fa-trash' onclick=deleteFlight(\"" + flight.flight_id + "\")></i ></a>" + "</td></tr>";
                     $("#internalFlightsBody").append(row);
                 } else {
-                    $("#externalFlightsBody").append("<tr id=" + "external_" + flight.flight_id + "onclick=showFlight('" + flight.flight_id + "')><td>" + flight.flight_id
+                    $("#externalFlightsBody").append("<tr id=" + flight.flight_id + " onclick=showFlight('" + flight.flight_id + "')><td>" + flight.flight_id
                         + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td></tr>");
                 }
             }
         })
         removeInactiveFlights();
-        //if the polygon on map is of non-active flight, remove it and also empty the flight details table.
-        /*        if (isPolygonFlighActive === false && flightPath.polyLine !== null) {
-                    flightPath.polyLine.setMap(null);
-                    $("#flightDetailsBody tr").empty();
-                }*/
     });
 }
 
 function removeInactiveFlights() {
+    //check internal flights table
     $('#internalFlights tr').each(function () {
+
+        //SECOND: remove polyline
+        if (flightsIdsSet.has(this.id) === false &&
+            flightPath.flightId === this.id && flightPath.polyLine !== null) {
+            flightPath.polyLine.setMap(null);
+        }
+
+        //THIRD: remove from table
         if (flightsIdsSet.has(this.id) === false && document.getElementById(this.id) !== null) {
             document.getElementById(this.id).remove();
+            //if inactive flight (ended flight) was selected so remove it's polygon and details
+            if (document.getElementById("details_" + this.id) !== null) {
+                document.getElementById("details_" + this.id).remove();
+            }
         }
     });
+
+    $('#externalFlights tr').each(function () {
+
+        //FIRST: if inactive flight (ended flight) was selected so remove it's polygon and details
+        if (document.getElementById("details_" + this.id) !== null) {
+            document.getElementById("details_" + this.id).remove();
+        }
+
+        //SECOND: remove polyline (if exist)
+        if (flightsIdsSet.has(this.id) === false &&
+            flightPath.flightId === this.id && flightPath.polyLine !== null) {
+            flightPath.polyLine.setMap(null);
+        }
+
+        //THIRD: remove from table
+        if (flightsIdsSet.has(this.id) === false && document.getElementById(this.id) !== null) {
+            document.getElementById(this.id).remove();
+            //if inactive flight (ended flight) was selected so remove it's polygon and details
+            if (document.getElementById("details_" + this.id) !== null) {
+                document.getElementById("details_" + this.id).remove();
+            }
+        }
+    });
+
 }
 
 function isExist(flight_id) {
