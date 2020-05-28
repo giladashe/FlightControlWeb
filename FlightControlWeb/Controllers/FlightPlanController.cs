@@ -53,6 +53,7 @@ namespace FlightControlWeb.Controllers
         {
             try
             {
+                
                 string id = manager.InsertFlightPlan(plan);
                 if (id != null)
                 {

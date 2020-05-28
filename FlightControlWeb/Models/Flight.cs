@@ -53,5 +53,6 @@ namespace FlightControlWeb.Models
             DateTime = dateTime;
             IsExternal = isExternal;
         }
+
     }
 }

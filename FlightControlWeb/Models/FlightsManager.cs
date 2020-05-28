@@ -43,12 +43,12 @@ namespace FlightControlWeb.Models
 
         public string InsertFlightPlan(FlightPlan flightPlan)
         {
-            if (flightPlan.CompanyName == null || flightPlan.Location == null || flightPlan.Location.DateTime == null || flightPlan.Segments == null)
+            if (!IsValidFlightPlan(flightPlan))
             {
-                throw new Exception("Not valid flight plan");
+                throw new Exception("Not a valid flight plan");
             }
-            // TODO sd
-           // DateTime.Parse(flightPlan.Location.DateTime);
+            // checks if date and tine are in format and throws execption if not
+            DateTime.Parse(flightPlan.Location.DateTime);
             string flightId = MakeUniqueId();
             if (!flightPlans.ContainsKey(flightId))
             {
@@ -58,9 +58,30 @@ namespace FlightControlWeb.Models
             {
                 flightId = null;
             }
-
             return flightId;
         }
+
+        // returns true if it's a valid flightplan
+        private bool IsValidFlightPlan(FlightPlan flightPlan)
+        {
+            if (flightPlan == null || flightPlan.CompanyName == null
+                || flightPlan.Location == null || flightPlan.Location.DateTime == null ||
+                flightPlan.Segments == null ||
+                !IsValidLonLat(flightPlan.Location.Longitude, flightPlan.Location.Latitude))
+            {
+                return false;
+            }
+            foreach (Segment segment in flightPlan.Segments)
+            {
+                if (!IsValidLonLat(segment.Longitude, segment.Latitude) ||
+                    segment.TimeSpanSeconds <= 0)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
 
         // makes 8 characters unique id
         private string MakeUniqueId()
@@ -123,6 +144,7 @@ namespace FlightControlWeb.Models
             foreach (KeyValuePair<string, FlightPlan> idAndPlan in flightPlans)
             {
                 Flight newFlight = AddFlightFromThisServer(idAndPlan, givenTime, isExternal);
+                //it's a relevant flight for the time
                 if (newFlight != null)
                 {
                     currentFlights.Add(newFlight);
@@ -224,7 +246,7 @@ namespace FlightControlWeb.Models
 
         public string DeleteServer(string id)
         {
-            Server server;
+            Server server = new Server();
             bool removed = servers.Remove(id, out server);
             if (removed)
             {
@@ -268,11 +290,11 @@ namespace FlightControlWeb.Models
                 }
                 finally
                 {
-                    if (flightsFromServer.Count > 0)
+                    if (flightsFromServer != null && flightsFromServer.Count > 0)
                     {
                         serversFlights.AddRange(flightsFromServer);
+                        flightsFromServer.Clear();
                     }
-                    flightsFromServer.Clear();
                 }
             }
             return serversFlights;
@@ -286,52 +308,88 @@ namespace FlightControlWeb.Models
                 DateParseHandling = DateParseHandling.None
             };
             List<Flight> flights = new List<Flight>();
-            dynamic response = await MakeRequest(server.ServerURL +
+            try
+            {
+                dynamic response = await MakeRequest(server.ServerURL +
                 "/api/Flights?relative_to=" + relativeTo);
 
-            if (response == null)
-            {
-                return flights;
-            }
-            string responseStr = response.ToString();
-            //doesn't have any flights
-            if (!responseStr.Contains("flight_id"))
-            {
-                return flights;
-            }
+                if (response == null)
+                {
+                    return flights;
+                }
+                string responseStr = response.ToString();
+                //doesn't have any flights
+                if (!responseStr.Contains("flight_id"))
+                {
+                    return flights;
+                }
 
-            foreach (var item in response)
+                foreach (var item in response)
+                {
+                    AddNewFlightFromOtherServers(flights, item, server.ServerId);
+                }
+                return flights;
+            }
+            catch (Exception)
             {
-                Flight newFlight = MakeFlightFromJson(item);
+                return null;
+            }
+        }
+
+
+        private void AddNewFlightFromOtherServers(List<Flight> flights, JToken jsonFlight,
+            string serverId)
+        {
+            Flight newFlight = MakeFlightFromJson(jsonFlight);
+            if (newFlight != null && !flightPlans.ContainsKey(newFlight.FlightId))
+            {
                 flights.Add(newFlight);
                 if (!idFromServers.ContainsKey(newFlight.FlightId))
                 {
-                    idFromServers.TryAdd(newFlight.FlightId, server.ServerId);
+                    idFromServers.TryAdd(newFlight.FlightId, serverId);
                 }
             }
-            return flights;
         }
 
 
         private Flight MakeFlightFromJson(JToken flight)
         {
-            if(flight == null)
+            if (flight == null)
             {
-                throw new Exception("Recieved invalid flight\n");
+                return null;
             }
-            int passengers = (int)flight["passengers"];
-            string flightId = (string)flight["flight_id"];
-            double longitude = (double)flight["longitude"];
-            double latitude = (double)flight["latitude"];
-            string companyName = (string)flight["company_name"];
-            string dateTime = (string)flight["date_time"];
-            bool isExternal = (bool)flight["is_external"];
-            // if it's not a valid date and time throws exception
-            DateTime.Parse(dateTime);
+            try
+            {
+                int passengers = (int)flight["passengers"];
+                string flightId = (string)flight["flight_id"];
+                double longitude = (double)flight["longitude"];
+                double latitude = (double)flight["latitude"];
+                string companyName = (string)flight["company_name"];
+                string dateTime = (string)flight["date_time"];
+                bool isExternal = (bool)flight["is_external"];
+                // if it's not a valid date and time throws exception
 
-            return new Flight(flightId, longitude, latitude, passengers, companyName, dateTime, isExternal);
+                if (flightId == null || companyName == null || dateTime == null ||
+                   !IsValidLonLat(longitude, latitude))
+                {
+                    return null;
+                }
+                // throws exception if not a valid date time
+                DateTime.Parse(dateTime);
+                return new Flight(flightId, longitude, latitude, passengers,
+                    companyName, dateTime, isExternal);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
+        public bool IsValidLonLat(double longitude, double latitude)
+        {
+            //latitude values (Y-values) range between -90 and +90 degrees.
+            return longitude >= -180 && longitude <= 180 && latitude >= -90 && latitude <= 90;
+        }
         private FlightPlan MakeFlightPlanFromJson(JToken flightPlan)
         {
             int passengers = (int)flightPlan["passengers"];
@@ -349,6 +407,10 @@ namespace FlightControlWeb.Models
                 double longitudeSegment = (double)segment["longitude"];
                 double latitudeSegment = (double)segment["latitude"];
                 double timeSpan = (double)segment["timespan_seconds"];
+                if (!IsValidLonLat(longitudeSegment, latitudeSegment) || timeSpan <= 0)
+                {
+                    return null;
+                }
                 Segment newSegment = new Segment(longitudeSegment, latitudeSegment, timeSpan);
                 segments.Add(newSegment);
             }
