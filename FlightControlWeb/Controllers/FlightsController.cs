@@ -45,6 +45,10 @@ namespace FlightControlWeb.Controllers
             }
             catch (Exception e)
             {
+                if(e.Message == "The operation was canceled.")
+                {
+                    return BadRequest("Timeout - server didn't bring the flights");
+                }
                 return BadRequest(e.Message);
             }
 

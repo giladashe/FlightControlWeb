@@ -34,6 +34,10 @@ namespace FlightControlWeb.Controllers
             }
             catch (Exception e)
             {
+                if (e.Message == "The operation was canceled.")
+                {
+                    return BadRequest("Timeout - server didn't bring the flight plan");
+                }
                 return BadRequest(e.Message);
             }
             if (plan == null)
@@ -49,10 +53,10 @@ namespace FlightControlWeb.Controllers
         {
             try
             {
-                string answer = manager.InsertFlightPlan(plan);
-                if (answer != null)
+                string id = manager.InsertFlightPlan(plan);
+                if (id != null)
                 {
-                    return Ok("Success");
+                    return Ok(id);
                 }
                 else
                 {

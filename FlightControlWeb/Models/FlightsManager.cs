@@ -256,9 +256,24 @@ namespace FlightControlWeb.Models
         private async Task<List<Flight>> GetFlightsFromServers(string relativeTo)
         {
             List<Flight> serversFlights = new List<Flight>();
+            List<Flight> flightsFromServer = new List<Flight>();
             foreach (Server server in servers.Values)
             {
-                serversFlights.AddRange(await GetFlightsFromServer(relativeTo, server));
+                try
+                {
+                    flightsFromServer = await GetFlightsFromServer(relativeTo, server);
+                }
+                catch (Exception)
+                {
+                }
+                finally
+                {
+                    if (flightsFromServer.Count > 0)
+                    {
+                        serversFlights.AddRange(flightsFromServer);
+                    }
+                    flightsFromServer.Clear();
+                }
             }
             return serversFlights;
         }
