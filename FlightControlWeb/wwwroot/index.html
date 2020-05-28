@@ -23,6 +23,8 @@
     <!-- Latest compiled JavaScript -->
     <script src="Bootstrap/js/popper.min.js"></script>
 
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
           integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
           crossorigin="" />
@@ -47,11 +49,12 @@
         /* Always set the map height explicitly to define the size of the div
         * element that contains the map. */
         #map {
-            height: 350px;
+            height: 420px;
         }
         /* Optional: Makes the sample page fill the window. */
         body, html {
-            height: 65%;
+            height: 100%;
+            background-size: cover;
             margin: 0;
             padding: 0;
             background-image: url("/Bootstrap/css/sky.jpg");
@@ -59,28 +62,36 @@
 
         h2 {
             text-align: center;
-            color: #d5e1e2;
         }
 
         h3 {
             text-align: center;
-            color: black;
-        }
-
-        #internalFlights {
+            color: white;
         }
 
         table {
-            overflow-y: scroll;
-            height: 400px;
+            overflow-y: auto;
+            height: 420px;
             display: block;
             padding: 15px;
-            background-color: #dbd8c7;
+            background-color: #17263c
+            /*background-color: #dbd8c7;*/
         }
 
-        table, th, td {
+        .details {
+            overflow-y: visible;
+            height: 130px;
             padding: 15px;
-            background-color: #dbd8c7;
+            background-color: #17263c
+        }
+
+        td {
+            background-color: #17263c
+        }
+
+        th, tr {
+            padding: 15px;
+            color: white
         }
 
         /*#flightDetails {
@@ -94,31 +105,6 @@
             left: 245px;
             top: 400px;
         }*/
-
-        #dropZone {
-            min-height: 500px;
-        }
-
-        .internalFlights {
-            min-height: 500px;
-        }
-
-        /*#dropZone * {
-            pointer-events: none;
-        }*/
-
-        .drag-text {
-            height: 500px;
-            color: white;
-            position: relative;
-        }
-
-            .drag-text h2 {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-            }
     </style>
 
 
@@ -128,24 +114,114 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-6">
-                <h2>Flight Control</h2>
+                <h2 class="text-white">My Map</h2>
                 <div id="map"></div>
                 <script>
-                    var map;
+/*                    var map;
                     function initMap() {
                         var coordinates = { lat: 32.002771, lng: 34.888544 };
                         map = new google.maps.Map(document.getElementById('map', coordinates), {
                             zoom: 4,
                             center: coordinates
                         });
+                    }*/
+
+                    
+                    var map;
+                    function initMap() {
+                        var coordinates = { lat: 32.002771, lng: 34.888544 };
+                        map = new google.maps.Map(document.getElementById('map', coordinates), {
+                            zoom: 4,
+                            center: coordinates,
+                            styles: [
+                                { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
+                                { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
+                                { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
+                                {
+                                    featureType: 'administrative.locality',
+                                    elementType: 'labels.text.fill',
+                                    stylers: [{ color: '#d59563' }]
+                                },
+                                {
+                                    featureType: 'poi',
+                                    elementType: 'labels.text.fill',
+                                    stylers: [{ color: '#d59563' }]
+                                },
+                                {
+                                    featureType: 'poi.park',
+                                    elementType: 'geometry',
+                                    stylers: [{ color: '#263c3f' }]
+                                },
+                                {
+                                    featureType: 'poi.park',
+                                    elementType: 'labels.text.fill',
+                                    stylers: [{ color: '#6b9a76' }]
+                                },
+                                {
+                                    featureType: 'road',
+                                    elementType: 'geometry',
+                                    stylers: [{ color: '#38414e' }]
+                                },
+                                {
+                                    featureType: 'road',
+                                    elementType: 'geometry.stroke',
+                                    stylers: [{ color: '#212a37' }]
+                                },
+                                {
+                                    featureType: 'road',
+                                    elementType: 'labels.text.fill',
+                                    stylers: [{ color: '#9ca5b3' }]
+                                },
+                                {
+                                    featureType: 'road.highway',
+                                    elementType: 'geometry',
+                                    stylers: [{ color: '#746855' }]
+                                },
+                                {
+                                    featureType: 'road.highway',
+                                    elementType: 'geometry.stroke',
+                                    stylers: [{ color: '#1f2835' }]
+                                },
+                                {
+                                    featureType: 'road.highway',
+                                    elementType: 'labels.text.fill',
+                                    stylers: [{ color: '#f3d19c' }]
+                                },
+                                {
+                                    featureType: 'transit',
+                                    elementType: 'geometry',
+                                    stylers: [{ color: '#2f3948' }]
+                                },
+                                {
+                                    featureType: 'transit.station',
+                                    elementType: 'labels.text.fill',
+                                    stylers: [{ color: '#d59563' }]
+                                },
+                                {
+                                    featureType: 'water',
+                                    elementType: 'geometry',
+                                    stylers: [{ color: '#17263c' }]
+                                },
+                                {
+                                    featureType: 'water',
+                                    elementType: 'labels.text.fill',
+                                    stylers: [{ color: '#515c6d' }]
+                                },
+                                {
+                                    featureType: 'water',
+                                    elementType: 'labels.text.stroke',
+                                    stylers: [{ color: '#17263c' }]
+                                }
+                            ]
+                        });
                     }
 
                 </script>
                 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAx7LLopSO76G5tucyaoefZKVc3TkAypv4&callback=initMap"></script>
-                <h3 id="flightDetailsHeading" class="mt-5">
+                <h2 id="flightDetailsHeading" class="mt-5 text-white">
                     Flight details
-                </h3>
-                <table class="table" id="flightDetails">
+                </h2>
+                <table class="details table" id="flightDetails">
                     <thead>
                         <tr>
                             <th>
@@ -162,19 +238,19 @@
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="table" id="flightDetailsBody">
+                    <tbody class="details" id="flightDetailsBody">
                     </tbody>
                 </table>
             </div>
             <div class="col-md-6">
 
-                <div id="dropZone" class="internalFlights drop_zone">
-                    <h2>
+                <div id="dropZone" class="internalFlights">
+                    <h2 class="text-white">
                         Internal flights
                     </h2>
 
-                    <div class="drag-text d-none">
-                        <h2>Drag Over Here</h2>
+                    <div class="drag-happen d-none">
+
                     </div>
 
                     <table class="table" id="internalFlights">
@@ -199,9 +275,9 @@
                     </table>
                 </div>
                 <div class="externalFlights">
-                    <h3 id="externalFlightsHeading">
+                    <h2 id="externalFlightsHeading" class="mt-5 text-white">
                         External flights
-                    </h3>
+                    </h2>
                     <table id="externalFlights">
                         <thead id="externalFlightsHead">
                             <tr>
@@ -228,4 +304,4 @@
     <script src="toastr/toastr.min.js"></script>
     <script src="Bootstrap/js/flight.js"></script>
 </body>
-    </html>
+</html>
