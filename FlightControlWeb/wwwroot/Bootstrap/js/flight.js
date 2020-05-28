@@ -1,4 +1,9 @@
-﻿     
+﻿$.getJSON("/api/FlightPlan/4", function () { })
+    .fail(function (jqXHR) {
+        toastr.error(jqXHR.statusText + ' : ' + jqXHR.responseText);
+    })
+
+
 //variables
 var markers = new Array();
 var flightPath = { flightId: null, polyLine: null }
@@ -48,10 +53,11 @@ function movePlanes() {
         data.forEach(function (flight) {
             showPlaneIcon(flight.latitude, flight.longitude, flight.flight_id);
         })
-        .fail(function (jqXHR) {
-            toastr.error(jqXHR.statusText + ' : ' + jqXHR.responseText);
-        })
-    });
+    })
+    .fail(function (jqXHR) {
+        toastr.error(jqXHR.statusText + ' : ' + jqXHR.responseText);
+       })
+;
 }
 
 function getFlights() {
@@ -128,9 +134,13 @@ function showFlight(flightID) {
 
     // remove green background of "table-success" from all internalFlights table and add it only to the selected row
     $("#internalFlights tr").removeClass('table-success');
+
+    $("#externalFlights tr").removeClass('table-success');
+
     //let row = event.target.parentNode;
     $('#' + flightID).addClass('table-success');
 
+    
     // remove table flightPlanBody so the flight appear only once  
     $("#flightDetailsBody tr").empty();
 
