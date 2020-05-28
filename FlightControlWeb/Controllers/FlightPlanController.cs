@@ -22,6 +22,7 @@ namespace FlightControlWeb.Controllers
         [HttpGet("{id}", Name = "GetFlightPlan")]
         public async Task<ActionResult<FlightPlan>> GetFlightPlan(string id)
         {
+           
             FlightPlan plan;
             try
             {
@@ -37,7 +38,7 @@ namespace FlightControlWeb.Controllers
             }
             if (plan == null)
             {
-                return NotFound();
+                return NotFound("Flight Plan not in DB");
             }
             return Ok(plan);
         }

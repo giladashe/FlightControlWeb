@@ -344,6 +344,8 @@ namespace FlightControlWeb.Models
         private async Task<dynamic> MakeRequest(string url)
         {
             using var client = new HttpClient();
+            //check if throws timeout exception
+            client.Timeout = TimeSpan.FromSeconds(20);
             var result = await client.GetStringAsync(url);
             dynamic json = JsonConvert.DeserializeObject(result);
             return json;

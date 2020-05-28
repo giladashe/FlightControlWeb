@@ -1,7 +1,4 @@
-﻿
-
-//initMap();
-
+﻿     
 //variables
 var markers = new Array();
 var flightPath = { flightId: null, polyLine: null }
@@ -36,8 +33,6 @@ $(document).ready(function () {
         movePlanes();
         getFlights();
     }, 2000);
-
-    //$('#dropZone').draggable();
 });
 
 //At some other point
@@ -52,6 +47,9 @@ function movePlanes() {
         removeMarkers();
         data.forEach(function (flight) {
             showPlaneIcon(flight.latitude, flight.longitude, flight.flight_id);
+        })
+        .fail(function (jqXHR) {
+            toastr.error(jqXHR.statusText + ' : ' + jqXHR.responseText);
         })
     });
 }
@@ -167,7 +165,8 @@ function showFlight(flightID) {
             + flightPlan.company_name + "</td><td>" +
             flightPlan.passengers + "</td><td>" + "longitude: " + flightPlan.initial_location.longitude + " &emsp;"
             + "latitude: " + flightPlan.initial_location.latitude + "</td></tr>");
-    });
+    })
+        .fail(function (jqXHR) { toastr.error(jqXHR.statusText + ' : ' + jqXHR.responseText); })
 }
 
 function paintFlightPath(flightPlan, flightID) {
@@ -236,13 +235,13 @@ const handleFiles = file => {
                     location.reload();
                 })
                 .fail(function (res) {
-                    alert("Error" + res);
+                    toastr.error("Error" + res);
                 });
         }
 
         reader.readAsDataURL(file[0]); // start reading the file data.
     } else {
-        alert("Accept Only 1 Json File");
+        toastr.error("Accept Only 1 Json File");
     }
 }
 
@@ -275,7 +274,7 @@ function deleteFlight(id) {
             showFlight(flightPath.flightId);
         }
     }).fail(function (res) {
-        alert("Error" + res);
+        toastr.error("Error" + res);
     });
 }
 
