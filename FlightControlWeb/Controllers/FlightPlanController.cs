@@ -42,7 +42,7 @@ namespace FlightControlWeb.Controllers
             }
             if (plan == null)
             {
-                return NotFound("Flight Plan not in DB");
+                return NotFound();
             }
             return Ok(plan);
         }
