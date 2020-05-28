@@ -1,9 +1,4 @@
-﻿$.getJSON("/api/FlightPlan/4", function () { })
-    .fail(function (jqXHR) {
-        toastr.error(jqXHR.statusText + ' : ' + jqXHR.responseText);
-    })
-
-
+﻿
 //variables
 var markers = new Array();
 var flightPath = { flightId: null, polyLine: null }
@@ -69,6 +64,7 @@ function getFlights() {
         //if there is no data to update, so empty the table.
         if (data.length === 0) {
             $('#internalFlightsBody').empty();
+            $('#externalFlightsBody').empty();
         }
         data.forEach(function (flight) {
             if (document.getElementById(flight.flight_id) === null) {
@@ -78,7 +74,7 @@ function getFlights() {
                         + "<td><a href='#'><i class='fa fa-trash' onclick=deleteFlight(\"" + flight.flight_id + "\")></i ></a>" + "</td></tr>";
                     $("#internalFlightsBody").append(row);
                 } else {
-                    $("#externalFlightsBody").append("<tr onclick=showFlight('" + flight.flight_id + "')><td>" + flight.flight_id
+                    $("#externalFlightsBody").append("<tr id=" + flight.flight_id + "onclick=showFlight('" + flight.flight_id + "')><td>" + flight.flight_id
                         + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td></tr>");
                 }
             }
