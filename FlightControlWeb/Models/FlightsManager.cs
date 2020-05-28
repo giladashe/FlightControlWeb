@@ -256,9 +256,24 @@ namespace FlightControlWeb.Models
         private async Task<List<Flight>> GetFlightsFromServers(string relativeTo)
         {
             List<Flight> serversFlights = new List<Flight>();
+            List<Flight> flightsFromServer = new List<Flight>();
             foreach (Server server in servers.Values)
             {
-                serversFlights.AddRange(await GetFlightsFromServer(relativeTo, server));
+                try
+                {
+                    flightsFromServer = await GetFlightsFromServer(relativeTo, server);
+                }
+                catch (Exception)
+                {
+                }
+                finally
+                {
+                    if (flightsFromServer.Count > 0)
+                    {
+                        serversFlights.AddRange(flightsFromServer);
+                    }
+                    flightsFromServer.Clear();
+                }
             }
             return serversFlights;
         }
@@ -307,7 +322,7 @@ namespace FlightControlWeb.Models
             int passengers = (int)flight["passengers"];
             string flightId = (string)flight["flight_id"];
             double longitude = (double)flight["longitude"];
-            double latitude = (double)flight["longitude"];
+            double latitude = (double)flight["latitude"];
             string companyName = (string)flight["company_name"];
             string dateTime = (string)flight["date_time"];
             bool isExternal = (bool)flight["is_external"];

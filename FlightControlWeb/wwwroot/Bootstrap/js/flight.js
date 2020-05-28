@@ -48,10 +48,11 @@ function movePlanes() {
         data.forEach(function (flight) {
             showPlaneIcon(flight.latitude, flight.longitude, flight.flight_id);
         })
-        //.fail(function (jqXHR) {
-        //    toastr.error(jqXHR.statusText + ' : ' + jqXHR.responseText);
-        //})
-    });
+    })
+    .fail(function (jqXHR) {
+        toastr.error(jqXHR.statusText + ' : ' + jqXHR.responseText);
+       })
+;
 }
 
 function getFlights() {
@@ -65,6 +66,7 @@ function getFlights() {
         //if there is no data to update, so empty the table.        
         if (data.length === 0) { //todo: I'M not sure I want this patch to be here
             $('#internalFlightsBody').empty();
+            $('#externalFlightsBody').empty();
         }
         data.forEach(function (flight) {
             flightsIdsSet.add(flight.flight_id);
@@ -75,8 +77,9 @@ function getFlights() {
                         + "<td><a href='#'><i class='fa fa-trash' onclick=deleteFlight(\"" + flight.flight_id + "\")></i ></a>" + "</td></tr>";
                     $("#internalFlightsBody").append(row);
                 } else {
-                    $("#externalFlightsBody").append("<tr id=" + flight.flight_id + " onclick=showFlight('" + flight.flight_id + "')><td>" + flight.flight_id
-                        + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td></tr>");
+                    let externalRow = "<tr id=" + flight.flight_id + " onclick=showFlight('" + flight.flight_id + "') ><td>" + flight.flight_id
+                        + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td>";
+                    $("#externalFlightsBody").append(externalRow);                    
                 }
             }
         })
@@ -176,9 +179,13 @@ function showFlight(flightID) {
 
     // remove green background of "table-success" from all internalFlights table and add it only to the selected row
     $("#internalFlights tr").removeClass('table-success');
+
+    $("#externalFlights tr").removeClass('table-success');
+
     //let row = event.target.parentNode;
     $('#' + flightID).addClass('table-success');
 
+    
     // remove table flightPlanBody so the flight appear only once  
     $("#flightDetailsBody tr").empty();
 
