@@ -1,9 +1,11 @@
 ﻿
 
+//initMap();
+
 //variables
 var markers = new Array();
 var flightPath = { flightId: null, polyLine: null }
-
+let flightsIdsSet = new Set();
 
 //configurations:
 //add google map a listener for click():
@@ -34,6 +36,8 @@ $(document).ready(function () {
         movePlanes();
         getFlights();
     }, 2000);
+
+    //$('#dropZone').draggable();
 });
 
 //At some other point
@@ -57,12 +61,19 @@ function getFlights() {
     let currentTime = new Date().toISOString().substr(0, 19);
     let timeFormat = currentTime + 'Z';
     let ask = "/api/Flights?relative_to=" + timeFormat + "&sync_all";
+    flightsIdsSet.clear();
+    /*let isPolygonFlighActive = false;*/
     $.getJSON(ask, function (data) {
-        //if there is no data to update, so empty the table.
-        if (data.length === 0) {
+        //if there is no data to update, so empty the table.        
+        if (data.length === 0) { //todo: I'M not sure I want this patch to be here
             $('#internalFlightsBody').empty();
         }
         data.forEach(function (flight) {
+            flightsIdsSet.add(flight.flight_id);
+            /*            if (flightPath.flightId !== null && flightPath.flightId === flight.flight_id) {
+                            //check if the flight which its polygon is on the map is still active.
+                            isPolygonFlighActive = true;
+                        }*/
             if (document.getElementById(flight.flight_id) === null) {
                 if (!flight.is_external) {
                     var row = "<tr id=" + flight.flight_id + " onclick=showFlight('" + flight.flight_id + "') ><td>" + flight.flight_id
@@ -70,11 +81,25 @@ function getFlights() {
                         + "<td><a href='#'><i class='fa fa-trash' onclick=deleteFlight(\"" + flight.flight_id + "\")></i ></a>" + "</td></tr>";
                     $("#internalFlightsBody").append(row);
                 } else {
-                    $("#externalFlightsBody").append("<tr onclick=showFlight('" + flight.flight_id + "')><td>" + flight.flight_id
+                    $("#externalFlightsBody").append("<tr id=" + "external_" + flight.flight_id + "onclick=showFlight('" + flight.flight_id + "')><td>" + flight.flight_id
                         + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td></tr>");
                 }
             }
         })
+        removeInactiveFlights();
+        //if the polygon on map is of non-active flight, remove it and also empty the flight details table.
+        /*        if (isPolygonFlighActive === false && flightPath.polyLine !== null) {
+                    flightPath.polyLine.setMap(null);
+                    $("#flightDetailsBody tr").empty();
+                }*/
+    });
+}
+
+function removeInactiveFlights() {
+    $('#internalFlights tr').each(function () {
+        if (flightsIdsSet.has(this.id) === false && document.getElementById(this.id) !== null) {
+            document.getElementById(this.id).remove();
+        }
     });
 }
 
@@ -137,7 +162,9 @@ function showFlight(flightID) {
     $.getJSON(flightPlanAsk, function (flightPlan) {
         // paint flight lines on map
         paintFlightPath(flightPlan, flightID);
-        $("#flightDetailsBody").append("<tr><td>" + flightID + "</td><td>" + flightPlan.company_name + "</td><td>" +
+        //id=" + flightID + "
+        $("#flightDetailsBody").append("<tr id=details_" + flightID + "><td>" + flightID + "</td><td>"
+            + flightPlan.company_name + "</td><td>" +
             flightPlan.passengers + "</td><td>" + "longitude: " + flightPlan.initial_location.longitude + " &emsp;"
             + "latitude: " + flightPlan.initial_location.latitude + "</td></tr>");
     });
@@ -165,39 +192,33 @@ function paintFlightPath(flightPlan, flightID) {
     flightPath.flightId = flightID;
 }
 
-var drop = $('#dropZone');
-drop.on('dragover', function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-});
+//var drop = $('#dropZone');
+const dropArea = document.getElementById('dropZone');
 
-drop.on('dragenter', function (e) {
+const preventDefaults = e => {
     e.preventDefault();
     e.stopPropagation();
-    //$('#dropZone *').css("pointer-events", "none");
-    //$('#dropZone').css({
-    //    "background": "rgba(0,153,255,1)",
-    //});
-    //$('#internalFlights').hide();
-    //$('.drag-text').removeClass('d-none');    
-}).on('dragleave dragend mouseout', function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    //$('#dropZone').css({
-    //    "background": "transparent"
-    //});
-    //$('#internalFlights').show();
-    //$('.drag-text').addClass('d-none');
-});
+}
 
-// Get file data on drop
-drop.on('drop', function (e) {
+const highlight = e => {
+    dropArea.classList.add('highlight');
+    $('#internalFlights').addClass('table-dark');
+}
 
-    //dropZone.classList.remove("dragover");
-    e.stopPropagation();
-    e.preventDefault();
-    var files = e.originalEvent.dataTransfer.files; // Array of all files
-    if (files.length === 1 && files[0].type.includes('/json')) {
+const unhighlight = e => {
+    dropArea.classList.remove('highlight');
+    $('#internalFlights').removeClass('table-dark');
+}
+
+const handleDrop = e => {
+    const dt = e.dataTransfer;
+    const file = dt.files;
+
+    handleFiles(file);
+}
+
+const handleFiles = file => {
+    if (file.length === 1 && file[0].type.includes('/json')) {
         var reader = new FileReader();
 
         reader.onload = function (e2) {
@@ -219,13 +240,27 @@ drop.on('drop', function (e) {
                 });
         }
 
-        reader.readAsDataURL(files[0]); // start reading the file data.
+        reader.readAsDataURL(file[0]); // start reading the file data.
     } else {
         alert("Accept Only 1 Json File");
     }
+}
+
+["dragenter", "dragover", "dragleave", "drop"].forEach(eventName => {
+    dropArea.addEventListener(eventName, preventDefaults, false);
 });
 
-function deleteFlight(id) {   
+["dragenter", "dragover"].forEach(eventName => {
+    dropArea.addEventListener(eventName, highlight, false);
+});
+
+["dragleave", "drop"].forEach(eventName => {
+    dropArea.addEventListener(eventName, unhighlight, false)
+});
+
+dropArea.addEventListener("drop", handleDrop, false);
+
+function deleteFlight(id) {
     $.ajax({
         url: '/api/Flights/' + id,
         contentType: "text/plain; charset=utf-8",
@@ -236,8 +271,7 @@ function deleteFlight(id) {
             flightPath.polyLine.setMap(null);
             flightPath.flightId = null
         } else {
-            //Keep the row 
-            //$('#' + flightPath.flightId).addClass('table-success');
+            //this case is relevant when the deleted flight is not the selected flight, so the selected flight need to remain selected.
             showFlight(flightPath.flightId);
         }
     }).fail(function (res) {
@@ -257,4 +291,7 @@ function smoothZoom(map, max, cnt) {
         });
         setTimeout(function () { map.setZoom(cnt) }, 80); // 80ms is what I found to work well on my system -- it might not work well on all systems
     }
-}  
+}
+
+
+
