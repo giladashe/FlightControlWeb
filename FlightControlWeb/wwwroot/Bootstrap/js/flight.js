@@ -70,10 +70,6 @@ function getFlights() {
         }
         data.forEach(function (flight) {
             flightsIdsSet.add(flight.flight_id);
-            /*            if (flightPath.flightId !== null && flightPath.flightId === flight.flight_id) {
-                            //check if the flight which its polygon is on the map is still active.
-                            isPolygonFlighActive = true;
-                        }*/
             if (document.getElementById(flight.flight_id) === null) {
                 if (!flight.is_external) {
                     var row = "<tr id=" + flight.flight_id + " onclick=showFlight('" + flight.flight_id + "') ><td>" + flight.flight_id
@@ -81,8 +77,12 @@ function getFlights() {
                         + "<td><a href='#'><i class='fa fa-trash' onclick=deleteFlight(\"" + flight.flight_id + "\")></i ></a>" + "</td></tr>";
                     $("#internalFlightsBody").append(row);
                 } else {
-                    $("#externalFlightsBody").append("<tr id=" + flight.flight_id + "onclick=showFlight('" + flight.flight_id + "')><td>" + flight.flight_id
-                        + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td></tr>");
+                    let externalRow = "<tr id=" + flight.flight_id + " onclick=showFlight('" + flight.flight_id + "') ><td>" + flight.flight_id
+                        + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td>";
+                    $("#externalFlightsBody").append(externalRow);
+                    /*"<tr id=" + flight.flight_id +
+                        " onclick=showFlight('" + flight.flight_id + "') ><td>" + flight.flight_id
+                        + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td></tr>");*/
                 }
             }
         })
