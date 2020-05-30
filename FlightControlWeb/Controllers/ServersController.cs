@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using FlightControlWeb.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +17,7 @@ namespace FlightControlWeb.Controllers
         }
 
 
-        // GET: api/Servers
+        // GET: api/Servers -  Get all servers from DB.
         [HttpGet]
         public ActionResult<IEnumerable<Server>> GetAllServers()
         {
@@ -30,10 +29,11 @@ namespace FlightControlWeb.Controllers
             return NotFound();
         }
 
-        // POST: api/Servers
+        // POST: api/Servers - Insert new Server to DB.
         [HttpPost]
         public ActionResult<string> InsertNewServer([FromBody] Server server)
         {
+            // Removes '/' from end of url (like http://localhost:5006/)
             string url = server.ServerURL;
             if (url.EndsWith('/'))
             {
@@ -49,7 +49,7 @@ namespace FlightControlWeb.Controllers
         }
 
 
-        // DELETE: api/ApiWithActions/5
+        // DELETE: api/ApiWithActions/5 -  Deletes Server if exists.
         [HttpDelete("{id}")]
         public ActionResult<string> DeleteServer(string id)
         {

@@ -11,11 +11,14 @@ namespace FlightControlWeb.Models
 {
     public class FlightsManager : IFlightsManager
     {
+
+        // Singleton concuurent dictionaries for flight plans, servers and plans id's from servers
         private static ConcurrentDictionary<string, FlightPlan> flightPlans;
         private static ConcurrentDictionary<string, Server> servers;
         //maps from flight plan id to server id
         private static ConcurrentDictionary<string, string> idFromServers;
 
+        // Constructs manager with dependency injection
         public FlightsManager(ConcurrentDictionary<string, FlightPlan> flightPlanDict,
             ConcurrentDictionary<string, Server> serversDict,
             ConcurrentDictionary<string, string> idFromServersDict)
@@ -25,7 +28,8 @@ namespace FlightControlWeb.Models
             idFromServers = idFromServersDict;
         }
 
-
+        // Gets flight plan from server if key exists in plans dictionary, else if it's 
+        // inside the plans returned from other servers gets the from the specific server.
         public async Task<FlightPlan> GetFlightPlan(string key)
         {
             FlightPlan plan = null;
@@ -41,29 +45,39 @@ namespace FlightControlWeb.Models
             return plan;
         }
 
+        // Insert flight plan to dictionary
         public string InsertFlightPlan(FlightPlan flightPlan)
         {
             if (!IsValidFlightPlan(flightPlan))
             {
                 throw new Exception("Not a valid flight plan");
             }
-            // checks if date and tine are in format and throws execption if not
+            // Checks if date and tine are in format and throws execption if not.
             DateTime.Parse(flightPlan.Location.DateTime);
-            string flightId = MakeUniqueId();
-            if (!flightPlans.ContainsKey(flightId))
+            string flightId = null;
+            // Tries 30 times to give a unique id that is not in dictionary.
+            int numOfTries = 30;
+            int i = 0;
+            for (; i < numOfTries; i++)
             {
-                flightPlans[flightId] = flightPlan;
+                flightId = MakeUniqueId();
+                if (!flightPlans.ContainsKey(flightId))
+                {
+                    flightPlans[flightId] = flightPlan;
+                    break;
+                }
             }
-            else
+            if (i == numOfTries)
             {
                 flightId = null;
             }
             return flightId;
         }
 
-        // returns true if it's a valid flightplan
+        // Returns true if it's a valid flightplan
         private bool IsValidFlightPlan(FlightPlan flightPlan)
         {
+            // Checks if it's null or it's fields or if longitude and latitude not in valid range.
             if (flightPlan == null || flightPlan.CompanyName == null
                 || flightPlan.Location == null || flightPlan.Location.DateTime == null ||
                 flightPlan.Segments == null ||
@@ -71,6 +85,7 @@ namespace FlightControlWeb.Models
             {
                 return false;
             }
+            // Goes over all segments in the flight plan and checks if they ara valid.
             foreach (Segment segment in flightPlan.Segments)
             {
                 if (!IsValidLonLat(segment.Longitude, segment.Latitude) ||
@@ -83,7 +98,7 @@ namespace FlightControlWeb.Models
         }
 
 
-        // makes 8 characters unique id
+        // Makes 8 characters unique id.
         private string MakeUniqueId()
         {
             Random random = new Random();
@@ -101,6 +116,7 @@ namespace FlightControlWeb.Models
             return id;
         }
 
+        // Delete flight plan from DB.
         public string DeleteFlight(string id)
         {
             if (!flightPlans.ContainsKey(id))
@@ -120,7 +136,8 @@ namespace FlightControlWeb.Models
             }
         }
 
-
+        // Get all flights from server and if isExternal==true checks other servers connected to 
+        // server too
         public async Task<IEnumerable<Flight>> GetAllFlights(string dateTime, bool isExternal)
         {
 
@@ -137,6 +154,7 @@ namespace FlightControlWeb.Models
             }
             isExternal = false;
 
+            // Converts the dateTime string to the type in UTC time.
             DateTime givenTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(dateTime));
 
             // goes over all flight plans and checks if flight is active at given time
@@ -153,6 +171,7 @@ namespace FlightControlWeb.Models
             return currentFlights;
         }
 
+        // Adds flight from this server to be returned to client.
         private Flight AddFlightFromThisServer(KeyValuePair<string, FlightPlan> idAndPlan, DateTime givenTime, bool isExternal)
         {
             string initialTimeToParse = idAndPlan.Value.Location.DateTime;
@@ -176,7 +195,7 @@ namespace FlightControlWeb.Models
             return null;
         }
 
-
+        // Sets current location of the flight.
         private Flight GetFlightWithCurrentLocation(DateTime initialTime, DateTime givenTime,
             FlightPlan plan, bool isExternal, string id)
         {
@@ -191,11 +210,15 @@ namespace FlightControlWeb.Models
                 // if it's inside the segment get the current location according to time
                 if (givenTime >= initialTime && givenTime < endTime)
                 {
-                    Tuple<double, double> currentLocation = Interpolation(initialLocation, endLocation,
+                    // Gets the current location.
+                    Tuple<double, double> currentLocation = 
+                        Interpolation(initialLocation, endLocation,
                         initialTime, givenTime, seconds);
-                    Flight flight = new Flight(id, isExternal, plan);
-                    flight.Longitude = currentLocation.Item1;
-                    flight.Latitude = currentLocation.Item2;
+                    Flight flight = new Flight(id, isExternal, plan)
+                    {
+                        Longitude = currentLocation.Item1,
+                        Latitude = currentLocation.Item2
+                    };
                     return flight;
                 }
                 initialTime = endTime;
@@ -213,13 +236,13 @@ namespace FlightControlWeb.Models
             }
             // time from beginning to given time
             TimeSpan difference = now.Subtract(begin);
-            // relative time difference
+            // Relative time difference.
             double relativeDifference = difference.TotalSeconds / totalSeconds;
-            // calculate distance between initial location and end of segment
+            // Calculate distance between initial location and end of segment.
             double distance = Math.Sqrt(Math.Pow((secondLocation.Item2 - firstLocation.Item2), 2)
                 + Math.Pow((secondLocation.Item1 - firstLocation.Item1), 2));
 
-            // calculate the wanted longitude and latitude from initial location
+            // Calculates the wanted longitude and latitude from initial location
             //(according to relative differnece of time)
             double wantedLongitude = firstLocation.Item1 + (secondLocation.Item1 - firstLocation.Item1)
                 * relativeDifference;
@@ -229,11 +252,13 @@ namespace FlightControlWeb.Models
             return new Tuple<double, double>(wantedLongitude, wantedLatitude);
         }
 
+        // Gets all servers' url from DB.
         public IEnumerable<Server> GetAllServers()
         {
             return servers.Values.AsEnumerable();
         }
 
+        // Inserts new server to DB.
         public string InsertServer(Server server)
         {
             if (!servers.ContainsKey(server.ServerId))
@@ -241,9 +266,10 @@ namespace FlightControlWeb.Models
                 servers[server.ServerId] = server;
                 return "Success";
             }
-            return "Already inside";
+            return "ID Already inside";
         }
 
+        // Deletes server from DB (if exists).
         public string DeleteServer(string id)
         {
             Server server = new Server();
@@ -258,6 +284,7 @@ namespace FlightControlWeb.Models
             }
         }
 
+        // Get flight plan from specific server with http request.
         private async Task<FlightPlan> GetFlightPlanFromServer(string planId, Server server)
         {
             FlightPlan flightPlan = null;
@@ -275,6 +302,7 @@ namespace FlightControlWeb.Models
             return flightPlan;
         }
 
+        // Gets the flights from all servers.
         private async Task<List<Flight>> GetFlightsFromServers(string relativeTo)
         {
             List<Flight> serversFlights = new List<Flight>();
@@ -300,7 +328,7 @@ namespace FlightControlWeb.Models
             return serversFlights;
         }
 
-
+        // Get flights from specific server (or returns null if connection didn't succeed).
         private async Task<List<Flight>> GetFlightsFromServer(string relativeTo, Server server)
         {
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings
@@ -336,7 +364,8 @@ namespace FlightControlWeb.Models
             }
         }
 
-
+        // Gets new flight from servers as json elements, parse them, put them in the flights
+        // list to be returned to client and add them to idFromServers dictionary.
         private void AddNewFlightFromOtherServers(List<Flight> flights, JToken jsonFlight,
             string serverId)
         {
@@ -351,7 +380,7 @@ namespace FlightControlWeb.Models
             }
         }
 
-
+        // Make a flight object from json.
         private Flight MakeFlightFromJson(JToken flight)
         {
             if (flight == null)
@@ -385,18 +414,31 @@ namespace FlightControlWeb.Models
             }
         }
 
+        // Checks if longitude and latitude are in valid range.
         public bool IsValidLonLat(double longitude, double latitude)
         {
             //latitude values (Y-values) range between -90 and +90 degrees.
             return longitude >= -180 && longitude <= 180 && latitude >= -90 && latitude <= 90;
         }
+
+        // Make flight plan from json if it's valid.
         private FlightPlan MakeFlightPlanFromJson(JToken flightPlan)
         {
+            if(flightPlan == null)
+            {
+                return null;
+            }
             int passengers = (int)flightPlan["passengers"];
             string companyName = (string)flightPlan["company_name"];
             double longitude = (double)flightPlan["initial_location"]["longitude"];
             double latitude = (double)flightPlan["initial_location"]["latitude"];
             string dateTime = (string)flightPlan["initial_location"]["date_time"];
+
+            if (companyName == null || dateTime == null)
+            {
+                return null;
+            }
+
             // if it's not a valid date and time throws exception
             DateTime.Parse(dateTime);
             InitialLocation location = new InitialLocation(longitude, latitude, dateTime);
@@ -418,6 +460,7 @@ namespace FlightControlWeb.Models
             return new FlightPlan(passengers, companyName, location, segments);
         }
 
+        // Make http request with specific url.
         private async Task<dynamic> MakeRequest(string url)
         {
             using var client = new HttpClient();

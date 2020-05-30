@@ -14,6 +14,7 @@ namespace FlightControlTests
 {
     public class FlightsControllerTests
     {
+        // Mocks.
         private readonly Mock<IFlightsManager> managerMock = new Mock<IFlightsManager>();
         private readonly Mock<HttpContext> myContext = new Mock<HttpContext>();
 
@@ -77,6 +78,7 @@ namespace FlightControlTests
             Assert.Equal("Date and time not in format", message);
         }
 
+        // Flights to test.
         public static IEnumerable<Flight> GetTestFlights()
         {
             List<Segment> segments = new List<Segment>();

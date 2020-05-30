@@ -1,17 +1,10 @@
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using FlightControlWeb.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace FlightControlWeb
 {
@@ -24,11 +17,10 @@ namespace FlightControlWeb
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
+        // Adds contorllers and uses dependency injection for manager(model) and it's dictionaries.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-            //services.AddMemoryCache();
             services.AddSingleton<ConcurrentDictionary<string, FlightPlan>>();
             services.AddSingleton<ConcurrentDictionary<string, Server>>();
             services.AddSingleton<ConcurrentDictionary<string, string>>();
@@ -36,7 +28,7 @@ namespace FlightControlWeb
 
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        // Configures the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())

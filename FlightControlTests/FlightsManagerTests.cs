@@ -14,6 +14,7 @@ namespace FlightControlTests
 {
     public class FlightsManagerTests
     {
+        // Mocks for dictionaries of manager (model).
         private readonly Mock<ConcurrentDictionary<string, FlightPlan>> flightPlanDictStub =
             new Mock<ConcurrentDictionary<string, FlightPlan>>();
         private readonly Mock<ConcurrentDictionary<string, Server>> serversDictStub =
@@ -26,11 +27,11 @@ namespace FlightControlTests
 
 
             FlightsManager manager =
-                new FlightsManager(this.flightPlanDictStub.Object, this.serversDictStub.Object,
-                this.idFromServersDictStub.Object);
+                new FlightsManager(flightPlanDictStub.Object, serversDictStub.Object,
+                idFromServersDictStub.Object);
 
 
-            var exceptionThrown = false;
+            bool exceptionThrown = false;
 
             // Act
             try
@@ -53,18 +54,18 @@ namespace FlightControlTests
         public async Task GetAllFlightsWithoutSyncAll()
         {
             // Arrange
-            List<Flight> flightsExpected = (List<Flight>) FlightsControllerTests.GetTestFlights();
-            
+            List<Flight> flightsExpected = (List<Flight>)FlightsControllerTests.GetTestFlights();
+
             FlightsController controller = ArrangeForSyncTests(false, flightsExpected);
 
             // Act
 
-            ActionResult<IEnumerable<Flight>> response = 
+            ActionResult<IEnumerable<Flight>> response =
                 await controller.GetAllFlights("2020-11-27T01:56:22Z");
 
             // Assert
 
-            // Check if response is ok and lists are equal
+            // Checks if response is ok and that lists are equal.
             Assert.IsType<OkObjectResult>(response.Result);
             OkObjectResult result = (OkObjectResult)response.Result;
             List<Flight> flightsResult = (List<Flight>)result.Value;
@@ -73,6 +74,7 @@ namespace FlightControlTests
 
         }
 
+        // Checks if sync_all works and get flights from all servers.
         [Fact]
         public async Task GetAllFlightsWithSyncAll()
         {
@@ -85,11 +87,12 @@ namespace FlightControlTests
 
             // Act
 
-            ActionResult<IEnumerable<Flight>> response = await controller.GetAllFlights("2020-11-27T01:56:22Z");
+            ActionResult<IEnumerable<Flight>> response = 
+                await controller.GetAllFlights("2020-11-27T01:56:22Z");
 
             // Assert
 
-            // Check if response is ok and lists are equal
+            // Checks if response is ok and that lists are equal.
             Assert.IsType<OkObjectResult>(response.Result);
             OkObjectResult result = (OkObjectResult)response.Result;
             List<Flight> flightsResult = (List<Flight>)result.Value;
@@ -97,6 +100,7 @@ namespace FlightControlTests
             CheckIfListsAreEqual(flightsWithSyncExpected, flightsResult);
         }
 
+        // Checks if the 2 flight lists are equal.
         internal static void CheckIfListsAreEqual(List<Flight> expected, List<Flight> returned)
         {
             Assert.Equal(expected.Count(), returned.Count());
@@ -109,7 +113,7 @@ namespace FlightControlTests
             }
         }
 
-
+        // Arrange the mocks and controller for the sync tests.
         private FlightsController ArrangeForSyncTests(bool withSync, List<Flight> flightsToReturn)
         {
             Mock<IFlightsManager> managerMock =
