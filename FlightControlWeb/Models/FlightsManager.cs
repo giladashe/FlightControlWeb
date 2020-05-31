@@ -39,7 +39,7 @@ namespace FlightControlWeb.Models
             }
             else if (idFromServers.ContainsKey(key))
             {
-                Server server = servers[idFromServers[key]];
+                var server = servers[idFromServers[key]];
                 plan = await GetFlightPlanFromServer(key, server);
             }
             return plan;
@@ -86,7 +86,7 @@ namespace FlightControlWeb.Models
                 return false;
             }
             // Goes over all segments in the flight plan and checks if they ara valid.
-            foreach (Segment segment in flightPlan.Segments)
+            foreach (var segment in flightPlan.Segments)
             {
                 if (!IsValidLonLat(segment.Longitude, segment.Latitude) ||
                     segment.TimeSpanSeconds <= 0)
@@ -101,7 +101,7 @@ namespace FlightControlWeb.Models
         // Makes 8 characters unique id.
         private string MakeUniqueId()
         {
-            Random random = new Random();
+            var random = new Random();
             string characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
             string numbers = "0123456789";
             string id = "";
@@ -123,7 +123,7 @@ namespace FlightControlWeb.Models
             {
                 return "not inside";
             }
-            FlightPlan plan = new FlightPlan();
+            var plan = new FlightPlan();
 
             bool removed = flightPlans.Remove(id, out plan);
             if (removed)
@@ -141,12 +141,12 @@ namespace FlightControlWeb.Models
         public async Task<IEnumerable<Flight>> GetAllFlights(string dateTime, bool isExternal)
         {
 
-            List<Flight> currentFlights = new List<Flight>();
+            var currentFlights = new List<Flight>();
             // get flights from server if is external
             if (isExternal)
             {
-                List<Flight> fromServers = await GetFlightsFromServers(dateTime);
-                foreach (Flight flight in fromServers)
+                var fromServers = await GetFlightsFromServers(dateTime);
+                foreach (var flight in fromServers)
                 {
                     flight.IsExternal = true;
                 }
@@ -161,7 +161,7 @@ namespace FlightControlWeb.Models
             // if it's active put the flight with the current location in the list
             foreach (KeyValuePair<string, FlightPlan> idAndPlan in flightPlans)
             {
-                Flight newFlight = AddFlightFromThisServer(idAndPlan, givenTime, isExternal);
+                var newFlight = AddFlightFromThisServer(idAndPlan, givenTime, isExternal);
                 //it's a relevant flight for the time
                 if (newFlight != null)
                 {
@@ -175,7 +175,7 @@ namespace FlightControlWeb.Models
         private Flight AddFlightFromThisServer(KeyValuePair<string, FlightPlan> idAndPlan, DateTime givenTime, bool isExternal)
         {
             string initialTimeToParse = idAndPlan.Value.Location.DateTime;
-            DateTime initialTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(initialTimeToParse));
+            var initialTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(initialTimeToParse));
             int comparison = initialTime.CompareTo(givenTime);
             // Or time is at the beginning of flight or it's inside a running flight
             if (comparison == 0)
@@ -185,7 +185,7 @@ namespace FlightControlWeb.Models
             else if (comparison < 0)
             {
                 // get flight with the current location
-                Flight flight = GetFlightWithCurrentLocation(initialTime, givenTime, idAndPlan.Value,
+                var flight = GetFlightWithCurrentLocation(initialTime, givenTime, idAndPlan.Value,
                     isExternal, idAndPlan.Key);
                 if (flight != null)
                 {
@@ -199,22 +199,22 @@ namespace FlightControlWeb.Models
         private Flight GetFlightWithCurrentLocation(DateTime initialTime, DateTime givenTime,
             FlightPlan plan, bool isExternal, string id)
         {
-            Tuple<double, double> initialLocation =
+            var initialLocation =
                 new Tuple<double, double>(plan.Location.Longitude, plan.Location.Latitude);
             // go over all segments of flight and checks of it's inside it
-            foreach (Segment segment in plan.Segments)
+            foreach (var segment in plan.Segments)
             {
                 double seconds = segment.TimeSpanSeconds;
-                Tuple<double, double> endLocation = new Tuple<double, double>(segment.Longitude, segment.Latitude);
+                var endLocation = new Tuple<double, double>(segment.Longitude, segment.Latitude);
                 DateTime endTime = initialTime.AddSeconds(seconds);
                 // if it's inside the segment get the current location according to time
                 if (givenTime >= initialTime && givenTime < endTime)
                 {
                     // Gets the current location.
-                    Tuple<double, double> currentLocation = 
+                    var currentLocation = 
                         Interpolation(initialLocation, endLocation,
                         initialTime, givenTime, seconds);
-                    Flight flight = new Flight(id, isExternal, plan)
+                    var flight = new Flight(id, isExternal, plan)
                     {
                         Longitude = currentLocation.Item1,
                         Latitude = currentLocation.Item2
@@ -235,7 +235,7 @@ namespace FlightControlWeb.Models
                 return firstLocation;
             }
             // time from beginning to given time
-            TimeSpan difference = now.Subtract(begin);
+            var difference = now.Subtract(begin);
             // Relative time difference.
             double relativeDifference = difference.TotalSeconds / totalSeconds;
             // Calculate distance between initial location and end of segment.
@@ -272,7 +272,7 @@ namespace FlightControlWeb.Models
         // Deletes server from DB (if exists).
         public string DeleteServer(string id)
         {
-            Server server = new Server();
+            var server = new Server();
             bool removed = servers.Remove(id, out server);
             if (removed)
             {
@@ -305,8 +305,8 @@ namespace FlightControlWeb.Models
         // Gets the flights from all servers.
         private async Task<List<Flight>> GetFlightsFromServers(string relativeTo)
         {
-            List<Flight> serversFlights = new List<Flight>();
-            List<Flight> flightsFromServer = new List<Flight>();
+            var serversFlights = new List<Flight>();
+            var flightsFromServer = new List<Flight>();
             foreach (Server server in servers.Values)
             {
                 try
@@ -335,7 +335,7 @@ namespace FlightControlWeb.Models
             {
                 DateParseHandling = DateParseHandling.None
             };
-            List<Flight> flights = new List<Flight>();
+            var flights = new List<Flight>();
             try
             {
                 dynamic response = await MakeRequest(server.ServerURL +
@@ -369,7 +369,7 @@ namespace FlightControlWeb.Models
         private void AddNewFlightFromOtherServers(List<Flight> flights, JToken jsonFlight,
             string serverId)
         {
-            Flight newFlight = MakeFlightFromJson(jsonFlight);
+            var newFlight = MakeFlightFromJson(jsonFlight);
             if (newFlight != null && !flightPlans.ContainsKey(newFlight.FlightId))
             {
                 flights.Add(newFlight);
@@ -441,9 +441,9 @@ namespace FlightControlWeb.Models
 
             // if it's not a valid date and time throws exception
             DateTime.Parse(dateTime);
-            InitialLocation location = new InitialLocation(longitude, latitude, dateTime);
-            JArray jsonSegments = (JArray)flightPlan["segments"];
-            List<Segment> segments = new List<Segment>();
+            var location = new InitialLocation(longitude, latitude, dateTime);
+            var jsonSegments = (JArray)flightPlan["segments"];
+            var segments = new List<Segment>();
             foreach (var segment in jsonSegments)
             {
                 double longitudeSegment = (double)segment["longitude"];
@@ -453,7 +453,7 @@ namespace FlightControlWeb.Models
                 {
                     return null;
                 }
-                Segment newSegment = new Segment(longitudeSegment, latitudeSegment, timeSpan);
+                var newSegment = new Segment(longitudeSegment, latitudeSegment, timeSpan);
                 segments.Add(newSegment);
             }
 
@@ -463,7 +463,7 @@ namespace FlightControlWeb.Models
         // Make http request with specific url.
         private async Task<dynamic> MakeRequest(string url)
         {
-            using var client = new HttpClient();
+            var client = new HttpClient();
             //check if throws timeout exception
             client.Timeout = TimeSpan.FromSeconds(20);
             var result = await client.GetStringAsync(url);

@@ -23,7 +23,7 @@ namespace FlightControlWeb.Controllers
         public async Task<ActionResult<FlightPlan>> GetFlightPlan(string id)
         {
            
-            FlightPlan plan;
+            var plan = new FlightPlan();
             try
             {
                 plan = await manager.GetFlightPlan(id);

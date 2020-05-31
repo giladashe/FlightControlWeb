@@ -21,12 +21,12 @@ namespace FlightControlWeb.Controllers
         [HttpGet]
         public ActionResult<IEnumerable<Server>> GetAllServers()
         {
-            IEnumerable<Server> servers = manager.GetAllServers();
+            var servers = manager.GetAllServers();
             if (servers.Any())
             {
                 return Ok(servers);
             }
-            return NotFound();
+            return NotFound("No servers in DB");
         }
         
         // POST: api/Servers - Insert new Server to DB.
