@@ -43,7 +43,7 @@ namespace FlightControlWeb.Controllers
             // If we didn't find the plan we return Not Found
             if (plan == null)
             {
-                return NotFound();
+                return NotFound("Didn't find the flight selected");
             }
             // Returns the plan
             return Ok(plan);

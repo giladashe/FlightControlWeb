@@ -20,7 +20,7 @@ namespace FlightControlWeb.Controllers
 
         // GET: api/Flights?relative_to=<DATE_TIME> - get all flights fron DB 
         // if "sync_all" is in the request we get the flights from other servers connected to 
-        // the server too
+        // the server too.
         [HttpGet]       
         public async Task<ActionResult<IEnumerable<Flight>>> GetAllFlights
             ([FromQuery(Name = "relative_to")]string relativeTo)
@@ -67,7 +67,7 @@ namespace FlightControlWeb.Controllers
             }
             else
             {
-                return NotFound();
+                return NotFound("Flight is not in DB so can't be deleted");
             }
         }
     }

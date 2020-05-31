@@ -7,10 +7,10 @@ namespace FlightControlWeb.Models
     [Serializable]
     public class Server
     {
-        [JsonPropertyName("server_id")]
+        [JsonPropertyName("ServerId")]
         public string ServerId { get; set; }
 
-        [JsonPropertyName("server_url")]
+        [JsonPropertyName("ServerURL")]
         public string ServerURL { get; set; }
 
         [JsonConstructor]
