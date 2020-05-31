@@ -10,9 +10,11 @@ map.addListener('click', function () {
     //when clicking on map, remove all colored paths or table marks.
     $("#internalFlights tr").removeClass('table-success');
     $("#externalFlightsBody tr").removeClass('table-success');
-    $("#flightDetailsBody tr").empty();
-    flightPath.polyLine.setMap(null);
-    initFlightPath();
+    $("#flightDetails > tbody").html(""); //**************************************************************
+    if (flightPath.polyLine !== null) {
+        flightPath.polyLine.setMap(null);
+        initFlightPath();
+    }
 })
 
 
@@ -231,7 +233,7 @@ function showFlight(flightID) {
 
 
     // remove table flightPlanBody so the flight appear only once  
-    $("#flightDetailsBody tr").empty();
+    $("#flightDetails > tbody").html("");
 
     // fill flightPlan table 
     //let flightID = row.children[0].innerText;
