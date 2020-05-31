@@ -19,7 +19,7 @@ namespace FlightControlTests
         private readonly Mock<HttpContext> myContext = new Mock<HttpContext>();
 
         [Fact]
-        public async Task GetAllFlightsGetHttpRequestExceptionShouldReturnBadRequest()
+        public async Task GetAllFlightsGetHttpRequestException_ShouldReturnBadRequest()
         {
 
             // Arrange
@@ -49,7 +49,7 @@ namespace FlightControlTests
         }
 
         [Fact]
-        public async Task GetAllFlightsGetFormatExceptionShouldReturnBadRequest()
+        public async Task GetAllFlightsGetFormatException_ShouldReturnBadRequest()
         {
 
             // Arrange
