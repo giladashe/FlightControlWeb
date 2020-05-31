@@ -28,7 +28,7 @@ namespace FlightControlWeb.Controllers
             }
             return NotFound();
         }
-
+        
         // POST: api/Servers - Insert new Server to DB.
         [HttpPost]
         public ActionResult<string> InsertNewServer([FromBody] Server server)

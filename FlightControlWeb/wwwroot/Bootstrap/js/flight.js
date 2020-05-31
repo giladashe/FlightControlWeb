@@ -9,10 +9,17 @@ let flightsIdsSet = new Set();
 map.addListener('click', function () {
     //when clicking on map, remove all colored paths or table marks.
     $("#internalFlights tr").removeClass('table-success');
+    $("#externalFlightsBody tr").removeClass('table-success');
     $("#flightDetailsBody tr").empty();
     flightPath.polyLine.setMap(null);
+    initFlightPath();
 })
 
+
+function initFlightPath() {
+    flightPath.flightId = null;
+    flightPath.polyLine = null;
+}
 
 //at beggining, get all flights
 getFlights();
@@ -49,10 +56,10 @@ function movePlanes() {
             showPlaneIcon(flight.latitude, flight.longitude, flight.flight_id);
         })
     })
-    .fail(function (jqXHR) {
-        toastr.error(jqXHR.statusText + ' : ' + jqXHR.responseText);
-       })
-;
+        .fail(function (jqXHR) {
+            toastr.error(jqXHR.statusText + ' : ' + jqXHR.responseText);
+        })
+        ;
 }
 
 function getFlights() {
@@ -63,23 +70,24 @@ function getFlights() {
     flightsIdsSet.clear();
     /*let isPolygonFlighActive = false;*/
     $.getJSON(ask, function (data) {
-        //if there is no data to update, so empty the table.        
-        if (data.length === 0) { //todo: I'M not sure I want this patch to be here
-            $('#internalFlightsBody').empty();
-            $('#externalFlightsBody').empty();
-        }
         data.forEach(function (flight) {
             flightsIdsSet.add(flight.flight_id);
             if (document.getElementById(flight.flight_id) === null) {
                 if (!flight.is_external) {
                     var row = "<tr id=" + flight.flight_id + " onclick=showFlight('" + flight.flight_id + "') ><td>" + flight.flight_id
                         + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td>"
-                        + "<td><a href='#'><i class='fa fa-trash' onclick=deleteFlight(\"" + flight.flight_id + "\")></i ></a>" + "</td></tr>";
+                        + "<td><a id=a_" + flight.flight_id + " href='#'><i class='fa fa-trash' onclick=deleteFlight(\"" + flight.flight_id + "\")></i ></a>" + "</td></tr>";
                     $("#internalFlightsBody").append(row);
+                    //todo: for testing, remove me.  ===========================================
+                    //                    let row = document.getElementById(flight.flight_id);
+
+                    trashButton = document.getElementById("a_" + flight.flight_id);
+                    trashButton.addEventListener("click", stopEvent, false);
+
                 } else {
                     let externalRow = "<tr id=" + flight.flight_id + " onclick=showFlight('" + flight.flight_id + "') ><td>" + flight.flight_id
                         + "</td>" + "<td>" + flight.company_name + "</td>" + "<td>" + flight.date_time + "</td>";
-                    $("#externalFlightsBody").append(externalRow);                    
+                    $("#externalFlightsBody").append(externalRow);
                 }
             }
         })
@@ -87,47 +95,83 @@ function getFlights() {
     });
 }
 
+function stopEvent(ev) {
+    ev.stopPropagation();
+}
+
 function removeInactiveFlights() {
     //check internal flights table
     $('#internalFlights tr').each(function () {
 
-        //SECOND: remove polyline
-        if (flightsIdsSet.has(this.id) === false &&
-            flightPath.flightId === this.id && flightPath.polyLine !== null) {
+        let id = this.id;
+        let inSet = flightsIdsSet.has(id);
+        let inDetails = (document.getElementById("details_" + id) !== null);
+        let inInternalOrExternal = (document.getElementById(id) !== null);
+        let pathPaintedOnScreen = (flightPath.flightId === id && flightPath.polyLine !== null);
+
+        // remove polyline
+        if (!inSet && pathPaintedOnScreen) {
             flightPath.polyLine.setMap(null);
+            initFlightPath();
+        }
+
+        // remove from details
+        if (!inSet && inDetails) {
+            document.getElementById("details_" + id).remove();
         }
 
         //THIRD: remove from table
-        if (flightsIdsSet.has(this.id) === false && document.getElementById(this.id) !== null) {
-            document.getElementById(this.id).remove();
-            //if inactive flight (ended flight) was selected so remove it's polygon and details
-            if (document.getElementById("details_" + this.id) !== null) {
-                document.getElementById("details_" + this.id).remove();
-            }
+        if (!inSet && inInternalOrExternal) {
+            document.getElementById(id).remove();
         }
     });
 
     $('#externalFlights tr').each(function () {
 
-        //FIRST: if inactive flight (ended flight) was selected so remove it's polygon and details
-        if (document.getElementById("details_" + this.id) !== null) {
-            document.getElementById("details_" + this.id).remove();
+        let id = this.id;
+        let inSet = flightsIdsSet.has(id);
+        let inDetails = (document.getElementById("details_" + id) !== null);
+        let inInternalOrExternal = (document.getElementById(id) !== null);
+        let pathPaintedOnScreen = (flightPath.flightId === id && flightPath.polyLine !== null);
+
+        // remove polyline
+        if (!inSet && pathPaintedOnScreen) {
+            flightPath.polyLine.setMap(null);
+            initFlightPath();
         }
 
-        //SECOND: remove polyline (if exist)
-        if (flightsIdsSet.has(this.id) === false &&
-            flightPath.flightId === this.id && flightPath.polyLine !== null) {
-            flightPath.polyLine.setMap(null);
+        // remove from details
+        if (!inSet && inDetails) {
+            document.getElementById("details_" + id).remove();
         }
 
         //THIRD: remove from table
-        if (flightsIdsSet.has(this.id) === false && document.getElementById(this.id) !== null) {
-            document.getElementById(this.id).remove();
-            //if inactive flight (ended flight) was selected so remove it's polygon and details
-            if (document.getElementById("details_" + this.id) !== null) {
-                document.getElementById("details_" + this.id).remove();
-            }
+        if (!inSet && inInternalOrExternal) {
+            document.getElementById(id).remove();
         }
+
+        /*        //FIRST: if inactive flight (ended flight) was selected so remove it's polygon and details
+                if (document.getElementById("details_" + this.id) !== null) {
+                    document.getElementById("details_" + this.id).remove();
+                }
+        
+                //SECOND: remove polyline (if exist)
+                if (flightsIdsSet.has(this.id) === false &&
+                    flightPath.flightId === this.id && flightPath.polyLine !== null) {
+                    flightPath.polyLine.setMap(null);
+                    initFlightPath();
+        
+                }
+        
+                //THIRD: remove from table
+                if (flightsIdsSet.has(this.id) === false && document.getElementById(this.id) !== null) {
+                    document.getElementById(this.id).remove();
+                    //if inactive flight (ended flight) was selected so remove it's polygon and details
+                    if (document.getElementById("details_" + this.id) !== null) {
+                        document.getElementById("details_" + this.id).remove();
+                    }
+                }*/
+
     });
 
 }
@@ -185,7 +229,7 @@ function showFlight(flightID) {
     //let row = event.target.parentNode;
     $('#' + flightID).addClass('table-success');
 
-    
+
     // remove table flightPlanBody so the flight appear only once  
     $("#flightDetailsBody tr").empty();
 
@@ -208,6 +252,7 @@ function paintFlightPath(flightPlan, flightID) {
     //remove previous paths from map:
     if (flightPath.polyLine !== null) {
         flightPath.polyLine.setMap(null);
+        initFlightPath();
     }
 
     lines = [{ lat: Number(flightPlan.initial_location.latitude), lng: Number(flightPlan.initial_location.longitude) }];
@@ -269,8 +314,8 @@ const handleFiles = file => {
                 .done(function () {
                     location.reload();
                 })
-                .fail(function (res) {
-                    toastr.error("Error" + res);
+                .fail(function (jqXHR) {
+                    toastr.error(jqXHR.statusText + ' : ' + jqXHR.responseText);
                 });
         }
 
@@ -295,21 +340,26 @@ const handleFiles = file => {
 dropArea.addEventListener("drop", handleDrop, false);
 
 function deleteFlight(id) {
+
     $.ajax({
         url: '/api/Flights/' + id,
         contentType: "text/plain; charset=utf-8",
         type: "DELETE",
     }).done(function () {
+        let details = document.getElementById("details_" + id);
+        if (details !== null) {
+            details.remove();
+        }
         document.getElementById(id).remove();
         if (flightPath.flightId === id) {
             flightPath.polyLine.setMap(null);
-            flightPath.flightId = null
-        } else {
+            initFlightPath();
+        } else if (flightPath.flightId !== null) {
             //this case is relevant when the deleted flight is not the selected flight, so the selected flight need to remain selected.
-            showFlight(flightPath.flightId);
+            //showFlight(flightPath.flightId);
         }
-    }).fail(function (res) {
-        toastr.error("Error" + res);
+    }).fail(function (jqXHR) {
+        toastr.error(jqXHR.statusText + ' : ' + jqXHR.responseText);
     });
 }
 
