@@ -22,7 +22,7 @@ namespace FlightControlTests
         private readonly Mock<ConcurrentDictionary<string, string>> idFromServersDictStub =
             new Mock<ConcurrentDictionary<string, string>>();
         [Fact]
-        public async Task GetAllFlightsWithUnformattedDateShouldRaiseFormatExeception()
+        public async Task GetAllFlightsWithUnformattedDate_ShouldRaiseFormatException()
         {
 
 
